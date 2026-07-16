@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
 import { LayoutProvider, useLayout } from '@/components/layout/layout-context';
+import { MobileTopBar } from '@/components/layout/MobileTopBar';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { cn } from '@/lib/utils';
 
@@ -21,8 +22,15 @@ function WikiLayoutContent({ children }: { children?: React.ReactNode }) {
 
       <Sidebar />
 
-      <main className="min-w-0 flex-1 overflow-hidden bg-white">
-        {children ?? <Outlet />}
+      <main className="flex min-w-0 flex-1 flex-col overflow-hidden bg-white">
+        {children ?? (
+          <>
+            <MobileTopBar />
+            <div className="min-h-0 flex-1 overflow-hidden">
+              <Outlet />
+            </div>
+          </>
+        )}
       </main>
       <Toaster position="bottom-center" />
     </div>

@@ -122,7 +122,7 @@ export function SharedPagesPage() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="mx-auto w-full max-w-[900px] px-4 py-8 sm:px-8 md:px-12 md:py-12">
+      <div className="mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6 md:px-12 md:py-12">
         <header className="mb-6">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             共享的知识

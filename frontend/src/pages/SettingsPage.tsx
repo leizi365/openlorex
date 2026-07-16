@@ -194,7 +194,7 @@ export function SettingsPage() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="mx-auto w-full max-w-[640px] px-4 py-8 sm:px-8 md:py-12">
+      <div className="mx-auto w-full max-w-[640px] px-4 py-6 sm:px-6 md:py-12">
         <header className="mb-8">
           <h1 className="font-nav-cjk text-2xl font-semibold tracking-tight text-foreground">
             设置

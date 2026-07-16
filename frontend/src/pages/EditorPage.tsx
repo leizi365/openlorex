@@ -130,7 +130,7 @@ export function EditorPage() {
           pageAccess={activePageAccess}
         />
         {activePage.contentLoaded === false ? (
-          <div className="mx-auto w-full max-w-[900px] px-4 py-12 text-center text-sm text-muted-foreground sm:px-8 md:px-12 lg:px-16">
+          <div className="mx-auto w-full max-w-[900px] px-4 py-12 text-center text-sm text-muted-foreground sm:px-6 md:px-12 lg:px-16">
             加载知识内容…
           </div>
         ) : (

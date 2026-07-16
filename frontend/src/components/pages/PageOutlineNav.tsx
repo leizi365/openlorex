@@ -122,7 +122,7 @@ export function PageOutlineNav({
   return (
     <div
       className={cn(
-        'pointer-events-none absolute top-0 left-3 z-20 flex w-[200px] flex-col items-stretch md:left-4',
+        'pointer-events-none absolute top-0 left-3 z-20 hidden w-[200px] flex-col items-stretch md:left-4 md:flex',
         className
       )}
     >

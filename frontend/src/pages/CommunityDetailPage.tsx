@@ -23,6 +23,7 @@ import { formatCommunityRole } from '@/features/communities/presentation';
 import { getHomeCardColor } from '@/features/pages/cover-colors';
 import { getNavLabelFontClass } from '@/lib/nav-font';
 import { cn } from '@/lib/utils';
+import { useLayout } from '@/components/layout/layout-context';
 
 function RoleBadge({ role }: { role: string }) {
   return (
@@ -52,7 +53,7 @@ function CommunityTabs({
 
   return (
     <nav
-      className="flex items-baseline gap-3 border-b border-border/60 text-sm"
+      className="flex items-baseline gap-3 text-sm"
       role="tablist"
       aria-label="社区内容"
     >
@@ -62,7 +63,7 @@ function CommunityTabs({
         return (
           <React.Fragment key={id}>
             {index > 0 ? (
-              <span aria-hidden className="font-nav-cjk pb-2 text-subtle-foreground/40">
+              <span aria-hidden className="font-nav-cjk text-subtle-foreground/40">
                 /
               </span>
             ) : null}
@@ -72,11 +73,9 @@ function CommunityTabs({
               aria-selected={isActive}
               onClick={() => onChange(id)}
               className={cn(
-                'inline-flex items-baseline gap-1.5 border-b-2 pb-2 select-none transition-colors',
+                'inline-flex items-baseline gap-1.5 select-none',
                 getNavLabelFontClass(label),
-                isActive
-                  ? '-mb-px border-foreground text-foreground'
-                  : 'border-transparent text-subtle-foreground hover:border-border/60 hover:text-foreground'
+                isActive ? 'text-foreground' : 'text-subtle-foreground'
               )}
             >
               <span>{label}</span>
@@ -99,6 +98,7 @@ export function CommunityDetailPage() {
   const [email, setEmail] = React.useState('');
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState<'members' | 'pages'>('pages');
+  const { setMobileTopBarTitle } = useLayout();
 
   const canManage =
     community?.my_role === 'owner' || community?.my_role === 'admin';
@@ -131,6 +131,11 @@ export function CommunityDetailPage() {
   React.useEffect(() => {
     void load();
   }, [load]);
+
+  React.useEffect(() => {
+    setMobileTopBarTitle(community?.name ?? null);
+    return () => setMobileTopBarTitle(null);
+  }, [community?.name, setMobileTopBarTitle]);
 
   const handleInvite = async () => {
     if (!email.trim()) {
@@ -180,7 +185,7 @@ export function CommunityDetailPage() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="mx-auto w-full max-w-[900px] px-4 py-8 sm:px-8 md:px-12 md:py-12">
+      <div className="mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6 md:px-12 md:py-12">
         <Link
           to="/communities"
           className="inline-flex items-center gap-1 font-nav-cjk text-sm text-subtle-foreground transition-colors hover:text-primary"
@@ -275,7 +280,7 @@ export function CommunityDetailPage() {
                   <CommunityListItem key={page.code}>
                     <Link
                       to={`/page/${page.code}`}
-                      className="group flex items-center gap-3 px-2 py-2.5"
+                      className="flex items-center gap-3 px-2 py-2.5"
                     >
                       <div
                         className="flex size-9 shrink-0 items-center justify-center rounded-xl"
@@ -292,7 +297,7 @@ export function CommunityDetailPage() {
                       <div className="min-w-0 flex-1">
                         <p
                           className={cn(
-                            'truncate text-[13px] leading-5 transition-colors group-hover:underline group-hover:underline-offset-2',
+                            'truncate text-[13px] leading-5',
                             getNavLabelFontClass(page.title)
                           )}
                         >
@@ -302,7 +307,7 @@ export function CommunityDetailPage() {
                           {page.permission === 'edit' ? '可编辑' : '只读'} · {page.owner_name}
                         </p>
                       </div>
-                      <ChevronRight className="size-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:text-muted-foreground" />
+                      <ChevronRight className="size-4 shrink-0 text-muted-foreground/50" />
                     </Link>
                   </CommunityListItem>
                 ))}

@@ -31,6 +31,7 @@ import type { PagePermissionDto } from '@/lib/api/pages';
 import { getNavLabelFontClass } from '@/lib/nav-font';
 import { pagePath } from '@/lib/page-paths';
 import { cn } from '@/lib/utils';
+import { useLayout } from '@/components/layout/layout-context';
 
 type PermissionLevel = 'view' | 'edit';
 type AccessTab = 'community' | 'user';
@@ -305,6 +306,7 @@ export function PageAccessManagePage() {
   const [addingCommunity, setAddingCommunity] = React.useState(false);
   const [addingUser, setAddingUser] = React.useState(false);
   const [pending, setPending] = React.useState<Set<string>>(() => new Set());
+  const { setMobileTopBarTitle } = useLayout();
 
   const communityGrants = React.useMemo(
     () => permissions.filter((item) => item.grantee_type === 'community'),
@@ -389,6 +391,11 @@ export function PageAccessManagePage() {
     void loadData(controller.signal);
     return () => controller.abort();
   }, [loadData]);
+
+  React.useEffect(() => {
+    setMobileTopBarTitle(title || null);
+    return () => setMobileTopBarTitle(null);
+  }, [setMobileTopBarTitle, title]);
 
   const runPending = async (key: string, action: () => Promise<void>) => {
     if (pending.has(key)) {
@@ -784,7 +791,7 @@ export function PageAccessManagePage() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="mx-auto w-full max-w-[900px] px-4 py-8 sm:px-8 md:px-12 md:py-12">
+      <div className="mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6 md:px-12 md:py-12">
         <Link
           to={pagePath(pageId)}
           className="inline-flex items-center gap-1 font-nav-cjk text-sm text-subtle-foreground transition-colors hover:text-primary"

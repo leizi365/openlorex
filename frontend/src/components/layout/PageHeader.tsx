@@ -89,7 +89,7 @@ export function PageHeader({
               'absolute top-3 right-3 z-20 flex gap-1 transition-opacity duration-150',
               showCoverControls
                 ? 'pointer-events-auto opacity-100'
-                : 'pointer-events-none opacity-0'
+                : 'pointer-events-none opacity-0 max-md:pointer-events-auto max-md:opacity-100'
             )}
           >
             <Popover open={coverOpen} onOpenChange={setCoverOpen}>
@@ -124,8 +124,8 @@ export function PageHeader({
         ) : null}
       </div>
 
-      <div className="mx-auto w-full min-w-0 max-w-[900px] px-4 sm:px-8 md:px-12 lg:px-16">
-        <div className="pl-7">
+      <div className="mx-auto w-full min-w-0 max-w-[900px] px-4 sm:px-6 md:px-12 lg:px-16">
+        <div className="px-3 md:px-7">
         {icon ? (
           readOnly ? (
             <div
@@ -180,7 +180,7 @@ export function PageHeader({
                 'flex flex-wrap items-center gap-1 transition-opacity duration-150',
                 showPageControls
                   ? 'pointer-events-auto opacity-100'
-                  : 'pointer-events-none opacity-0'
+                  : 'pointer-events-none opacity-0 max-md:pointer-events-auto max-md:opacity-100'
               )}
             >
               {!icon ? (

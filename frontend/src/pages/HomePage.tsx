@@ -26,62 +26,6 @@ function SectionHeader({ title }: { title: string }) {
   );
 }
 
-const HOME_STAT_COLORS = {
-  owned: '#D3E5EF',
-  public: '#DBEDDB',
-  community: '#E8DEEE',
-} as const;
-
-function StatCard({
-  value,
-  label,
-  color,
-  href,
-  to,
-}: {
-  value: number;
-  label: string;
-  color: string;
-  href?: string;
-  to?: string;
-}) {
-  const className = cn(
-    'inline-flex items-baseline gap-1 rounded-lg px-2.5 py-1.5 transition-colors hover:brightness-[0.97]',
-    (href || to) && 'cursor-pointer'
-  );
-  const content = (
-    <>
-      <span className="font-nav text-sm font-semibold tabular-nums text-foreground/90">
-        {value}
-      </span>
-      <span className="font-nav-cjk text-xs text-foreground/70">{label}</span>
-    </>
-  );
-  const style = { backgroundColor: color };
-
-  if (to) {
-    return (
-      <Link to={to} className={className} style={style}>
-        {content}
-      </Link>
-    );
-  }
-
-  if (href) {
-    return (
-      <a href={href} className={className} style={style}>
-        {content}
-      </a>
-    );
-  }
-
-  return (
-    <div className={className} style={style}>
-      {content}
-    </div>
-  );
-}
-
 function HomeSummary({
   ownedPageCount,
   publicPageCount,
@@ -105,46 +49,50 @@ function HomeSummary({
 
   if (ownedPageCount > 0) {
     items.push(
-      <StatCard
-        key="owned"
-        value={ownedPageCount}
-        label="篇知识"
-        color={HOME_STAT_COLORS.owned}
-      />
+      <span key="owned">{ownedPageCount} 篇知识</span>
     );
   }
 
   if (publicPageCount > 0) {
     items.push(
-      <StatCard
+      <a
         key="public"
-        value={publicPageCount}
-        label="篇公开"
-        color={HOME_STAT_COLORS.public}
         href="#public-knowledge"
-      />
+        className="transition-colors hover:text-foreground"
+      >
+        {publicPageCount} 篇公开
+      </a>
     );
   }
 
   if (communityCount > 0) {
     items.push(
-      <StatCard
+      <Link
         key="community"
-        value={communityCount}
-        label="个社区"
-        color={HOME_STAT_COLORS.community}
         to="/communities"
-      />
+        className="transition-colors hover:text-foreground"
+      >
+        {communityCount} 个社区
+      </Link>
     );
   }
 
-  return <div className="mb-6 flex flex-wrap gap-2">{items}</div>;
+  return (
+    <p className="mb-6 flex flex-wrap items-center gap-x-2 gap-y-1 font-nav-cjk text-sm text-subtle-foreground">
+      {items.map((item, index) => (
+        <React.Fragment key={index}>
+          {index > 0 ? <span aria-hidden className="text-subtle-foreground/40">·</span> : null}
+          {item}
+        </React.Fragment>
+      ))}
+    </p>
+  );
 }
 
 function PublicPageRow({ page }: { page: PageTreeNode }) {
   return (
     <CommunityListItem>
-      <div className="flex items-center gap-3 px-2 py-2.5">
+      <div className="flex items-center gap-3 px-3 py-2.5">
         <Link
           to={`/page/${page.id}`}
           className="group flex min-w-0 flex-1 items-center gap-3"
@@ -243,7 +191,7 @@ export function HomePage() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="mx-auto w-full max-w-[900px] px-4 py-8 sm:px-8 md:px-12 md:py-12">
+      <div className="mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6 md:px-12 md:py-12">
         <header className="mb-6">
           <h1 className={cn('text-2xl font-semibold tracking-tight text-foreground', getNavLabelFontClass('Home'))}>
             Home

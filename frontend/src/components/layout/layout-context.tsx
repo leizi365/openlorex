@@ -17,6 +17,8 @@ type LayoutContextValue = {
   sidebarCollapsed: boolean;
   setSidebarCollapsed: (collapsed: boolean) => void;
   toggleSidebarCollapsed: () => void;
+  mobileTopBarTitle: string | null;
+  setMobileTopBarTitle: (title: string | null) => void;
 };
 
 const LayoutContext = React.createContext<LayoutContextValue | null>(null);
@@ -25,6 +27,9 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [sidebarCollapsed, setSidebarCollapsedState] = React.useState(
     readSidebarCollapsed
+  );
+  const [mobileTopBarTitle, setMobileTopBarTitle] = React.useState<string | null>(
+    null
   );
 
   const setSidebarCollapsed = React.useCallback((collapsed: boolean) => {
@@ -45,8 +50,10 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
       sidebarCollapsed,
       setSidebarCollapsed,
       toggleSidebarCollapsed: () => setSidebarCollapsed(!sidebarCollapsed),
+      mobileTopBarTitle,
+      setMobileTopBarTitle,
     }),
-    [sidebarCollapsed, setSidebarCollapsed, sidebarOpen]
+    [mobileTopBarTitle, sidebarCollapsed, setSidebarCollapsed, sidebarOpen]
   );
 
   return (

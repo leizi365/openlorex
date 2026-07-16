@@ -63,7 +63,7 @@ export const ColumnElement = withHOC(
     });
 
     return (
-      <div className="group/column relative" style={{ width: width ?? '100%' }}>
+      <div className="group/column relative max-md:!w-full" style={{ width: width ?? '100%' }}>
         {!readOnly && !isSelectionAreaVisible && (
           <div
             ref={handleRef}
@@ -140,7 +140,7 @@ export function ColumnGroupElement(props: PlateElementProps) {
   return (
     <PlateElement className="mb-2" {...props}>
       <ColumnFloatingToolbar>
-        <div className="flex size-full rounded">{props.children}</div>
+        <div className="flex size-full flex-col rounded md:flex-row">{props.children}</div>
       </ColumnFloatingToolbar>
     </PlateElement>
   );

@@ -289,7 +289,12 @@ export function PublicSidebar({ pageId }: { pageId: string }) {
             : SIDEBAR_WIDTH,
       }}
     >
-      <div className="relative flex min-w-0 flex-1 bg-muted/50">
+      <div
+        className={cn(
+          'relative flex min-w-0 flex-1',
+          isMobile ? 'bg-sidebar' : 'bg-muted/50'
+        )}
+      >
         <aside
           className={cn(
             'font-nav group/sidebar relative z-20 flex size-full min-w-0 flex-col overflow-x-hidden overflow-y-auto border-r pb-[env(safe-area-inset-bottom)]',

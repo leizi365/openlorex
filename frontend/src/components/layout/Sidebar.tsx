@@ -76,9 +76,10 @@ function SidebarNavItem({
   const [hovered, setHovered] = React.useState(false);
   const showTrailing =
     Boolean(trailing) && (showTrailingAlways || hovered || isMobile);
+  const hasTrailingSlot = Boolean(trailing) && !collapsed;
 
-  const className = cn(
-    'relative flex min-h-[28px] min-w-0 cursor-pointer items-center rounded-md text-[13px] leading-5 transition-colors',
+  const itemClassName = cn(
+    'relative flex min-h-[28px] min-w-0 items-center rounded-md text-[13px] leading-5 transition-colors',
     collapsed
       ? 'mx-auto size-9 justify-center px-0 py-0'
       : 'w-full py-1 pl-2 pr-1',
@@ -87,7 +88,12 @@ function SidebarNavItem({
       : 'text-muted-foreground'
   );
 
-  const content = collapsed ? (
+  const rowClassName = cn(
+    'flex min-w-0 flex-1 items-center text-inherit no-underline',
+    collapsed ? 'justify-center' : hasTrailingSlot ? 'pr-10' : 'pr-1'
+  );
+
+  const labelContent = collapsed ? (
     <span
       className="relative flex size-[18px] shrink-0 items-center justify-center"
       title={label}
@@ -102,18 +108,12 @@ function SidebarNavItem({
       <span
         className={cn(
           'min-w-0 flex-1 truncate font-medium tracking-tight',
-          showTrailing ? 'pr-10' : 'pr-1',
           getNavLabelFontClass(label)
         )}
         title={label}
       >
         {label}
       </span>
-      {showTrailing ? (
-        <div className="absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-x-1">
-          {trailing}
-        </div>
-      ) : null}
     </>
   );
 
@@ -122,31 +122,46 @@ function SidebarNavItem({
     onMouseLeave: () => setHovered(false),
   };
 
-  if (href) {
-    return (
+  const mainRow =
+    href ? (
       <Link
         to={href}
-        className={className}
+        className={rowClassName}
         onClick={onNavigate}
-        {...hoverHandlers}
       >
-        {content}
+        {labelContent}
       </Link>
+    ) : onClick ? (
+      <button
+        type="button"
+        className={cn(rowClassName, 'cursor-pointer text-left')}
+        onClick={() => {
+          onClick();
+          onNavigate?.();
+        }}
+      >
+        {labelContent}
+      </button>
+    ) : (
+      <div className={rowClassName}>{labelContent}</div>
     );
-  }
 
   return (
-    <button
-      type="button"
-      onClick={() => {
-        onClick?.();
-        onNavigate?.();
-      }}
-      className={cn(className, 'w-full text-left')}
-      {...hoverHandlers}
-    >
-      {content}
-    </button>
+    <div className={itemClassName} {...hoverHandlers}>
+      {mainRow}
+      {hasTrailingSlot ? (
+        <div
+          className={cn(
+            'absolute top-1/2 right-1 flex -translate-y-1/2 items-center gap-x-1 transition-opacity',
+            showTrailing
+              ? 'pointer-events-auto opacity-100'
+              : 'pointer-events-none opacity-0'
+          )}
+        >
+          {trailing}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -334,7 +349,8 @@ function SidebarPageTreeItem({
           to={href}
           onClick={onNavigate}
           className={cn(
-            'flex min-w-0 flex-1 items-center overflow-hidden rounded-md py-1 pr-10 transition-colors',
+            'flex min-w-0 flex-1 items-center overflow-hidden rounded-md py-1 transition-colors',
+            canCreateChild || canDelete ? 'pr-10' : 'pr-1',
             isActive ? 'text-foreground' : 'text-foreground/90'
           )}
         >
@@ -352,8 +368,15 @@ function SidebarPageTreeItem({
           </span>
         </Link>
 
-        {showActions && (canCreateChild || canDelete) ? (
-          <div className="absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-0.5">
+        {canCreateChild || canDelete ? (
+          <div
+            className={cn(
+              'absolute top-1/2 right-1 flex -translate-y-1/2 items-center gap-0.5 transition-opacity',
+              showActions
+                ? 'pointer-events-auto opacity-100'
+                : 'pointer-events-none opacity-0'
+            )}
+          >
             {canCreateChild ? (
               <SidebarIconButton
                 label="新建子知识"
@@ -647,7 +670,12 @@ export function Sidebar() {
               : SIDEBAR_WIDTH,
         }}
       >
-        <div className="relative flex min-w-0 flex-1 bg-muted/50">
+        <div
+          className={cn(
+            'relative flex min-w-0 flex-1',
+            isMobile ? 'bg-sidebar' : 'bg-muted/50'
+          )}
+        >
           <aside
             className={cn(
               'font-nav group/sidebar relative z-20 flex size-full min-w-0 flex-col overflow-x-hidden overflow-y-auto border-r pb-[env(safe-area-inset-bottom)]',
@@ -690,8 +718,8 @@ export function Sidebar() {
                     type="button"
                     onClick={handleSidebarToggle}
                     className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition hover:bg-primary/4"
-                    aria-label="折叠侧栏"
-                    title="折叠侧栏"
+                    aria-label={isMobile ? '关闭侧栏' : '折叠侧栏'}
+                    title={isMobile ? '关闭侧栏' : '折叠侧栏'}
                   >
                     <ChevronsLeft className="size-4" />
                   </button>
