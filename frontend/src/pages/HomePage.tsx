@@ -1,20 +1,27 @@
 import * as React from 'react';
-import { Globe } from 'lucide-react';
+import { ChevronRight, Globe } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { ColorEmoji } from '@/components/ui/color-emoji';
+import { CommunityAvatar } from '@/features/communities/CommunityAvatar';
 import { CommunityListItem } from '@/features/communities/CommunityListItem';
+import { formatCommunityVisibility } from '@/features/communities/presentation';
 import { usePages } from '@/features/pages/page-context';
 import { getHomeCardColor } from '@/features/pages/cover-colors';
 import type { PageTreeNode } from '@/features/pages/types';
 import { useRecentPageVisits } from '@/hooks/use-recent-page-visits';
-import { fetchCommunities } from '@/lib/api/communities';
+import {
+  fetchCommunities,
+  fetchPublicCommunities,
+} from '@/lib/api/communities';
+import type { CommunitySummaryDto } from '@/lib/api/communities';
 import { publicPagePath } from '@/lib/page-paths';
 import { getNavLabelFontClass } from '@/lib/nav-font';
 import { cn } from '@/lib/utils';
 
 const HOME_PUBLIC_PAGE_LIMIT = 8;
+const HOME_OPEN_COMMUNITY_LIMIT = 6;
 
 function flattenPageTree(nodes: PageTreeNode[]): PageTreeNode[] {
   return nodes.flatMap((node) => [node, ...flattenPageTree(node.children)]);
@@ -135,10 +142,40 @@ function PublicPageRow({ page }: { page: PageTreeNode }) {
   );
 }
 
+function OpenCommunityRow({ community }: { community: CommunitySummaryDto }) {
+  return (
+    <CommunityListItem>
+      <Link
+        to={`/communities/${community.code}`}
+        className="group flex items-center gap-3 px-3 py-2.5"
+      >
+        <CommunityAvatar
+          name={community.name}
+          seed={community.code}
+          size="sm"
+        />
+        <div className="min-w-0 flex-1">
+          <p className={cn('truncate text-sm', getNavLabelFontClass(community.name))}>
+            {community.name}
+          </p>
+          <p className="mt-0.5 font-nav-cjk text-xs text-subtle-foreground">
+            {formatCommunityVisibility(true)} · {community.member_count} 位成员 ·{' '}
+            {community.owner_name}
+          </p>
+        </div>
+        <ChevronRight className="size-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:text-muted-foreground" />
+      </Link>
+    </CommunityListItem>
+  );
+}
+
 export function HomePage() {
   const recentVisits = useRecentPageVisits();
   const { workspace, pageTree } = usePages();
   const [communityCount, setCommunityCount] = React.useState(0);
+  const [openCommunities, setOpenCommunities] = React.useState<CommunitySummaryDto[]>(
+    []
+  );
   const [loadingCommunities, setLoadingCommunities] = React.useState(true);
 
   React.useEffect(() => {
@@ -147,9 +184,13 @@ export function HomePage() {
     void (async () => {
       setLoadingCommunities(true);
       try {
-        const communityItems = await fetchCommunities();
+        const [communityItems, publicItems] = await Promise.all([
+          fetchCommunities(),
+          fetchPublicCommunities(),
+        ]);
         if (!cancelled) {
           setCommunityCount(communityItems.length);
+          setOpenCommunities(publicItems.slice(0, HOME_OPEN_COMMUNITY_LIMIT));
         }
       } catch (error) {
         if (!cancelled) {
@@ -188,6 +229,7 @@ export function HomePage() {
   );
   const hasRecentVisits = recentVisits.length > 0;
   const hasPublicPages = publicPages.length > 0;
+  const hasOpenCommunities = openCommunities.length > 0;
 
   return (
     <div className="h-full overflow-y-auto">
@@ -240,6 +282,31 @@ export function HomePage() {
             ) : (
               <p className="font-nav-cjk rounded-xl border border-dashed border-border/70 px-4 py-8 text-center text-sm text-muted-foreground">
                 打开知识后会出现在这里
+              </p>
+            )}
+          </section>
+
+          <section id="open-communities" className="space-y-3">
+            <div className="flex items-baseline justify-between gap-3">
+              <SectionHeader title="开放的社区" />
+              <Link
+                to="/communities"
+                className="font-nav-cjk text-xs text-subtle-foreground transition-colors hover:text-foreground"
+              >
+                查看全部
+              </Link>
+            </div>
+            {loadingCommunities ? (
+              <p className="font-nav-cjk text-sm text-muted-foreground">加载中…</p>
+            ) : hasOpenCommunities ? (
+              <ul className="space-y-1">
+                {openCommunities.map((community) => (
+                  <OpenCommunityRow key={community.code} community={community} />
+                ))}
+              </ul>
+            ) : (
+              <p className="font-nav-cjk rounded-xl border border-dashed border-border/70 px-4 py-8 text-center text-sm text-muted-foreground">
+                暂无开放社区，创建开放社区后会出现在这里
               </p>
             )}
           </section>

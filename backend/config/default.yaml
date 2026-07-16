@@ -9,10 +9,10 @@ server:
   port: 8001
 
 database:
-  host: 106.15.193.48
+  host: 127.0.0.1
   port: 3306
   user: root
-  password: 4304Leizi
+  password: 000000
   name: wiki
   pool_size: 10
   max_overflow: 20
