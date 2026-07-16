@@ -1,0 +1,76 @@
+'use client';
+
+import * as React from 'react';
+
+import type { PlateElementProps } from 'platejs/react';
+
+import { EmojiInlineIndexSearch, insertEmoji } from '@platejs/emoji';
+import { EmojiPlugin } from '@platejs/emoji/react';
+import { PlateElement, usePluginOption } from 'platejs/react';
+
+import { useDebounce } from '@/hooks/use-debounce';
+
+import { ColorEmoji } from '@/components/ui/color-emoji';
+
+import {
+  InlineCombobox,
+  InlineComboboxContent,
+  InlineComboboxEmpty,
+  InlineComboboxGroup,
+  InlineComboboxInput,
+  InlineComboboxItem,
+} from './inline-combobox';
+
+const TRAILING_COLON_REGEX = /:$/;
+
+export function EmojiInputElement(props: PlateElementProps) {
+  const { children, editor, element } = props;
+  const data = usePluginOption(EmojiPlugin, 'data')!;
+  const [value, setValue] = React.useState('');
+  const debouncedValue = useDebounce(value, 100);
+  const isPending = value !== debouncedValue;
+
+  const filteredEmojis = React.useMemo(() => {
+    if (debouncedValue.trim().length === 0) return [];
+
+    return EmojiInlineIndexSearch.getInstance(data)
+      .search(debouncedValue.replace(TRAILING_COLON_REGEX, ''))
+      .get();
+  }, [data, debouncedValue]);
+
+  return (
+    <PlateElement as="span" {...props}>
+      <InlineCombobox
+        value={value}
+        element={element}
+        filter={false}
+        setValue={setValue}
+        trigger=":"
+        hideWhenNoValue
+      >
+        <InlineComboboxInput />
+
+        <InlineComboboxContent>
+          {!isPending && <InlineComboboxEmpty>无结果</InlineComboboxEmpty>}
+
+          <InlineComboboxGroup>
+            {filteredEmojis.map((emoji) => (
+              <InlineComboboxItem
+                key={emoji.id}
+                value={emoji.name}
+                onClick={() => insertEmoji(editor, emoji)}
+              >
+                <ColorEmoji size={16} className="mr-1">
+                  {emoji.skins[0].native}
+                </ColorEmoji>
+                {emoji.name}
+              </InlineComboboxItem>
+            ))}
+          </InlineComboboxGroup>
+        </InlineComboboxContent>
+      </InlineCombobox>
+
+      {children}
+    </PlateElement>
+  );
+}

@@ -1,0 +1,456 @@
+@import 'tailwindcss';
+
+@plugin 'tailwind-scrollbar-hide';
+@import 'tw-animate-css';
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/noto-sans-sc";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --font-heading: var(--font-sans);
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Segoe UI Symbol', 'Android Emoji', emoji;
+  /* Latin → Geist; CJK → Noto Sans SC (browser picks per glyph) */
+  --font-nav: 'Geist Variable', 'Noto Sans SC Variable', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', ui-sans-serif, system-ui, sans-serif;
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --color-brand: var(--brand);
+  --color-highlight: var(--highlight);
+  --color-subtle-foreground: var(--subtle-foreground);
+}
+
+:root {
+  --radius: 0.375rem;
+  --background: #ffffff;
+  --foreground: rgba(55, 53, 47, 1);
+  --subtle-foreground: rgba(55, 53, 47, 0.65);
+  --card: #ffffff;
+  --card-foreground: rgba(55, 53, 47, 1);
+  --popover: #ffffff;
+  --popover-foreground: rgba(55, 53, 47, 1);
+  --primary: rgba(55, 53, 47, 1);
+  --primary-foreground: #ffffff;
+  --secondary: rgba(55, 53, 47, 0.06);
+  --secondary-foreground: rgba(55, 53, 47, 1);
+  --muted: #f7f7f5;
+  --muted-foreground: rgba(55, 53, 47, 0.45);
+  --accent: rgba(55, 53, 47, 0.08);
+  --accent-foreground: rgba(55, 53, 47, 1);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: rgba(55, 53, 47, 0.09);
+  --input: rgba(55, 53, 47, 0.16);
+  --ring: rgba(35, 131, 226, 0.5);
+  --sidebar: #f7f7f5;
+  --sidebar-foreground: rgba(55, 53, 47, 0.85);
+  --sidebar-primary: #2383e2;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(55, 53, 47, 0.08);
+  --sidebar-accent-foreground: rgba(55, 53, 47, 1);
+  --sidebar-border: rgba(55, 53, 47, 0.06);
+  --sidebar-ring: rgba(35, 131, 226, 0.5);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --highlight: oklch(0.852 0.199 91.936);
+  --brand: oklch(0.623 0.214 259.815);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --subtle-foreground: oklch(0.708 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --highlight: oklch(0.852 0.199 91.936);
+  --brand: oklch(0.707 0.165 254.624);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply antialiased bg-background text-foreground;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  html {
+    @apply font-sans;
+    font-variant-emoji: emoji;
+  }
+
+  .emoji,
+  [data-emoji='true'] {
+    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji',
+      'Segoe UI Symbol', 'Android Emoji', emoji;
+    font-variant-emoji: emoji;
+  }
+
+  .slate-editor {
+    font-variant-emoji: emoji;
+  }
+
+  .font-nav {
+    font-family: var(--font-nav);
+    font-size: 0.875rem;
+    font-weight: 500;
+    font-feature-settings: 'kern' 1;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .font-nav-cjk {
+    font-family: 'Noto Sans SC Variable', 'PingFang SC', 'Hiragino Sans GB',
+      'Microsoft YaHei', sans-serif;
+    font-weight: 500;
+  }
+}
+
+/* Code block syntax highlighting + themes */
+.slate-code-block {
+  --code-fg: rgba(55, 53, 47, 0.95);
+  --code-bg: #f7f6f3;
+  --code-border: rgba(55, 53, 47, 0.09);
+  --code-toolbar: rgba(55, 53, 47, 0.04);
+  --code-toolbar-fg: rgba(55, 53, 47, 0.55);
+  color: var(--code-fg);
+}
+
+/* Hide browser spell/grammar wavy underlines in page content */
+[data-slate-editor] ::spelling-error,
+[data-slate-editor] ::grammar-error,
+.slate-code-block ::spelling-error,
+.slate-code-block ::grammar-error {
+  text-decoration: none !important;
+  background: transparent !important;
+}
+
+.slate-code-block[data-theme='mac'] {
+  --code-fg: #f8f8f2;
+  --code-bg: #282a36;
+  --code-border: rgba(0, 0, 0, 0.35);
+  --code-toolbar: #21222c;
+  --code-toolbar-fg: rgba(248, 248, 242, 0.55);
+}
+
+.slate-code-block[data-theme='github'] {
+  --code-fg: #e6edf3;
+  --code-bg: #0d1117;
+  --code-border: #30363d;
+  --code-toolbar: #161b22;
+  --code-toolbar-fg: #8b949e;
+}
+
+.slate-code-block[data-theme='terminal'] {
+  --code-fg: #33ff66;
+  --code-bg: #0b0f0c;
+  --code-border: #1a2a1c;
+  --code-toolbar: #071009;
+  --code-toolbar-fg: rgba(51, 255, 102, 0.55);
+}
+
+.dark .slate-code-block[data-theme='default'] {
+  --code-fg: #e6edf3;
+  --code-bg: #0d1117;
+  --code-border: rgba(240, 246, 252, 0.1);
+  --code-toolbar: rgba(240, 246, 252, 0.04);
+  --code-toolbar-fg: #8b949e;
+}
+
+.slate-code-block .hljs-comment,
+.slate-code-block .hljs-quote,
+.slate-code-block .hljs-code,
+.slate-code-block .hljs-formula {
+  color: #6a737d;
+  font-style: italic;
+}
+
+.slate-code-block .hljs-keyword,
+.slate-code-block .hljs-selector-tag,
+.slate-code-block .hljs-doctag,
+.slate-code-block .hljs-template-tag,
+.slate-code-block .hljs-template-variable,
+.slate-code-block .hljs-type,
+.slate-code-block .hljs-variable.language_ {
+  color: #d73a49;
+}
+
+.slate-code-block .hljs-string,
+.slate-code-block .hljs-regexp,
+.slate-code-block .hljs-addition,
+.slate-code-block .hljs-attribute,
+.slate-code-block .hljs-meta .hljs-string {
+  color: #032f62;
+}
+
+.slate-code-block .hljs-number,
+.slate-code-block .hljs-literal,
+.slate-code-block .hljs-variable,
+.slate-code-block .hljs-attr,
+.slate-code-block .hljs-meta,
+.slate-code-block .hljs-selector-attr,
+.slate-code-block .hljs-selector-class,
+.slate-code-block .hljs-selector-id,
+.slate-code-block .hljs-operator {
+  color: #005cc5;
+}
+
+.slate-code-block .hljs-title,
+.slate-code-block .hljs-section,
+.slate-code-block .hljs-title.class_,
+.slate-code-block .hljs-title.class_.inherited__,
+.slate-code-block .hljs-title.function_,
+.slate-code-block .function_ {
+  color: #6f42c1;
+}
+
+.slate-code-block .hljs-built_in,
+.slate-code-block .hljs-symbol,
+.slate-code-block .hljs-bullet,
+.slate-code-block .hljs-params {
+  color: #e36209;
+}
+
+.slate-code-block .hljs-name,
+.slate-code-block .hljs-selector-pseudo,
+.slate-code-block .hljs-tag {
+  color: #22863a;
+}
+
+.slate-code-block .hljs-deletion {
+  color: #b31d28;
+  background-color: #ffeef0;
+}
+
+.slate-code-block .hljs-addition {
+  background-color: #f0fff4;
+}
+
+.slate-code-block .hljs-emphasis {
+  font-style: italic;
+}
+
+.slate-code-block .hljs-strong,
+.slate-code-block .hljs-section {
+  font-weight: 700;
+}
+
+/* Dark themes override default token colors */
+.slate-code-block[data-theme='mac'] .hljs-comment,
+.slate-code-block[data-theme='mac'] .hljs-quote,
+.slate-code-block[data-theme='github'] .hljs-comment,
+.slate-code-block[data-theme='github'] .hljs-quote,
+.slate-code-block[data-theme='terminal'] .hljs-comment,
+.slate-code-block[data-theme='terminal'] .hljs-quote {
+  color: #6272a4;
+  font-style: italic;
+}
+
+.slate-code-block[data-theme='mac'] .hljs-keyword,
+.slate-code-block[data-theme='mac'] .hljs-selector-tag,
+.slate-code-block[data-theme='mac'] .hljs-doctag,
+.slate-code-block[data-theme='mac'] .hljs-type,
+.slate-code-block[data-theme='github'] .hljs-keyword,
+.slate-code-block[data-theme='github'] .hljs-selector-tag,
+.slate-code-block[data-theme='github'] .hljs-doctag,
+.slate-code-block[data-theme='github'] .hljs-type {
+  color: #ff79c6;
+}
+
+.slate-code-block[data-theme='mac'] .hljs-string,
+.slate-code-block[data-theme='mac'] .hljs-regexp,
+.slate-code-block[data-theme='mac'] .hljs-attr,
+.slate-code-block[data-theme='github'] .hljs-string,
+.slate-code-block[data-theme='github'] .hljs-regexp,
+.slate-code-block[data-theme='github'] .hljs-attr {
+  color: #f1fa8c;
+}
+
+.slate-code-block[data-theme='mac'] .hljs-number,
+.slate-code-block[data-theme='mac'] .hljs-literal,
+.slate-code-block[data-theme='github'] .hljs-number,
+.slate-code-block[data-theme='github'] .hljs-literal {
+  color: #bd93f9;
+}
+
+.slate-code-block[data-theme='mac'] .hljs-title,
+.slate-code-block[data-theme='mac'] .hljs-title.function_,
+.slate-code-block[data-theme='mac'] .function_,
+.slate-code-block[data-theme='github'] .hljs-title,
+.slate-code-block[data-theme='github'] .hljs-title.function_,
+.slate-code-block[data-theme='github'] .function_ {
+  color: #50fa7b;
+}
+
+.slate-code-block[data-theme='mac'] .hljs-built_in,
+.slate-code-block[data-theme='mac'] .hljs-params,
+.slate-code-block[data-theme='github'] .hljs-built_in,
+.slate-code-block[data-theme='github'] .hljs-params {
+  color: #ffb86c;
+}
+
+.slate-code-block[data-theme='mac'] .hljs-name,
+.slate-code-block[data-theme='mac'] .hljs-tag,
+.slate-code-block[data-theme='github'] .hljs-name,
+.slate-code-block[data-theme='github'] .hljs-tag {
+  color: #8be9fd;
+}
+
+.slate-code-block[data-theme='terminal'] .hljs-keyword,
+.slate-code-block[data-theme='terminal'] .hljs-selector-tag,
+.slate-code-block[data-theme='terminal'] .hljs-type {
+  color: #3dff7a;
+  font-weight: 600;
+}
+
+.slate-code-block[data-theme='terminal'] .hljs-string,
+.slate-code-block[data-theme='terminal'] .hljs-attr {
+  color: #9dffb8;
+}
+
+.slate-code-block[data-theme='terminal'] .hljs-number,
+.slate-code-block[data-theme='terminal'] .hljs-literal {
+  color: #66ff99;
+}
+
+.slate-code-block[data-theme='terminal'] .hljs-title,
+.slate-code-block[data-theme='terminal'] .hljs-title.function_,
+.slate-code-block[data-theme='terminal'] .function_,
+.slate-code-block[data-theme='terminal'] .hljs-built_in {
+  color: #b8ffd0;
+}
+
+.dark .slate-code-block[data-theme='default'] .hljs-comment,
+.dark .slate-code-block[data-theme='default'] .hljs-quote,
+.dark .slate-code-block[data-theme='default'] .hljs-code,
+.dark .slate-code-block[data-theme='default'] .hljs-formula {
+  color: #8b949e;
+}
+
+.dark .slate-code-block[data-theme='default'] .hljs-keyword,
+.dark .slate-code-block[data-theme='default'] .hljs-selector-tag,
+.dark .slate-code-block[data-theme='default'] .hljs-doctag,
+.dark .slate-code-block[data-theme='default'] .hljs-template-tag,
+.dark .slate-code-block[data-theme='default'] .hljs-template-variable,
+.dark .slate-code-block[data-theme='default'] .hljs-type,
+.dark .slate-code-block[data-theme='default'] .hljs-variable.language_ {
+  color: #ff7b72;
+}
+
+.dark .slate-code-block[data-theme='default'] .hljs-string,
+.dark .slate-code-block[data-theme='default'] .hljs-regexp,
+.dark .slate-code-block[data-theme='default'] .hljs-addition,
+.dark .slate-code-block[data-theme='default'] .hljs-attribute,
+.dark .slate-code-block[data-theme='default'] .hljs-meta .hljs-string {
+  color: #a5d6ff;
+}
+
+.dark .slate-code-block[data-theme='default'] .hljs-number,
+.dark .slate-code-block[data-theme='default'] .hljs-literal,
+.dark .slate-code-block[data-theme='default'] .hljs-variable,
+.dark .slate-code-block[data-theme='default'] .hljs-attr,
+.dark .slate-code-block[data-theme='default'] .hljs-meta,
+.dark .slate-code-block[data-theme='default'] .hljs-selector-attr,
+.dark .slate-code-block[data-theme='default'] .hljs-selector-class,
+.dark .slate-code-block[data-theme='default'] .hljs-selector-id,
+.dark .slate-code-block[data-theme='default'] .hljs-operator {
+  color: #79c0ff;
+}
+
+.dark .slate-code-block[data-theme='default'] .hljs-title,
+.dark .slate-code-block[data-theme='default'] .hljs-section,
+.dark .slate-code-block[data-theme='default'] .hljs-title.class_,
+.dark .slate-code-block[data-theme='default'] .hljs-title.class_.inherited__,
+.dark .slate-code-block[data-theme='default'] .hljs-title.function_,
+.dark .slate-code-block[data-theme='default'] .function_ {
+  color: #d2a8ff;
+}
+
+.dark .slate-code-block[data-theme='default'] .hljs-built_in,
+.dark .slate-code-block[data-theme='default'] .hljs-symbol,
+.dark .slate-code-block[data-theme='default'] .hljs-bullet,
+.dark .slate-code-block[data-theme='default'] .hljs-params {
+  color: #ffa657;
+}
+
+.dark .slate-code-block[data-theme='default'] .hljs-name,
+.dark .slate-code-block[data-theme='default'] .hljs-selector-pseudo,
+.dark .slate-code-block[data-theme='default'] .hljs-tag {
+  color: #7ee787;
+}
+
+.dark .slate-code-block[data-theme='default'] .hljs-deletion {
+  color: #ffa198;
+  background-color: rgba(248, 81, 73, 0.15);
+}
+
+.dark .slate-code-block[data-theme='default'] .hljs-addition {
+  background-color: rgba(46, 160, 67, 0.15);
+}

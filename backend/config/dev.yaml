@@ -1,0 +1,8 @@
+app:
+  debug: true
+
+database:
+  echo: true
+
+jwt:
+  secret_key: dev-only-secret-key

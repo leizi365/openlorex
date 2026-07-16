@@ -1,0 +1,35 @@
+app:
+  name: wiki-api
+  debug: false
+  api_prefix: /api/v1
+  frontend_url: http://localhost:5173
+
+server:
+  host: 0.0.0.0
+  port: 8001
+
+database:
+  host: 106.15.193.48
+  port: 3306
+  user: root
+  password: 4304Leizi
+  name: wiki
+  pool_size: 10
+  max_overflow: 20
+  echo: false
+
+jwt:
+  secret_key: change-me-in-env-specific-config
+  algorithm: HS256
+  access_token_expire_minutes: 120
+  refresh_token_expire_days: 7
+
+upload:
+  dir: uploads
+  max_size_mb: 50
+  max_image_size_mb: 5
+
+cors:
+  origins:
+    - http://localhost:5173
+    - http://127.0.0.1:5173

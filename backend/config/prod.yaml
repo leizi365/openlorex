@@ -1,0 +1,7 @@
+app:
+  debug: false
+
+database:
+  echo: false
+
+# jwt.secret_key 必须通过环境变量 JWT_SECRET_KEY 注入，勿写入仓库

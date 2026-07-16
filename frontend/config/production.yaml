@@ -1,0 +1,6 @@
+api:
+  baseUrl: /api/v1
+
+# 若 API 在独立域名，可改为：
+# api:
+#   baseUrl: https://api.example.com/api/v1

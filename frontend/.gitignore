@@ -1,0 +1,42 @@
+node_modules
+dist
+.DS_Store
+*.local
+.env
+.env.local
+.env.*.local
+
+# Python 虚拟环境
+.venv/
+venv/
+env/
+ENV/
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+
+# Node / Vite 前端
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 环境变量密钥
+.env
+.env.local
+.env.development
+.env.production
+
+# 系统文件
+.DS_Store
+Thumbs.db

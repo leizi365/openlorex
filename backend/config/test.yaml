@@ -1,0 +1,9 @@
+app:
+  debug: true
+
+database:
+  name: wiki_test
+  echo: false
+
+jwt:
+  secret_key: test-only-secret-key

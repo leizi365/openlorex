@@ -1,0 +1,13 @@
+server:
+  host: true
+  port: 5173
+
+proxy:
+  target: http://127.0.0.1:8001
+
+api:
+  baseUrl: /api/v1
+
+upload:
+  maxImageSizeMb: 5
+  maxFileSizeMb: 50
