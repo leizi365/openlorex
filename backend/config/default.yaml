@@ -9,7 +9,7 @@ server:
   port: 8001
 
 database:
-  host: 127.0.0.1
+  host: 106.15.193.48
   port: 3306
   user: root
   password: 4304Leizi

@@ -6,11 +6,13 @@ from pydantic import BaseModel, Field
 class CommunityCreateRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     description: str | None = Field(default=None, max_length=2000)
+    is_public: bool = False
 
 
 class CommunityUpdateRequest(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=100)
     description: str | None = Field(default=None, max_length=2000)
+    is_public: bool | None = None
 
 
 class CommunityMemberSummary(BaseModel):
@@ -25,10 +27,12 @@ class CommunitySummary(BaseModel):
     code: str
     name: str
     description: str | None = None
+    is_public: bool = False
     owner_code: str
     owner_name: str
     member_count: int
-    my_role: str
+    my_role: str | None = None
+    my_application_status: str | None = None
     created_at: str
 
 
@@ -58,3 +62,20 @@ class AcceptInvitationRequest(BaseModel):
 
 class UpdateMemberRoleRequest(BaseModel):
     role: str = Field(pattern="^(admin|member)$")
+
+
+class JoinApplicationCreateRequest(BaseModel):
+    message: str | None = Field(default=None, max_length=500)
+
+
+class JoinApplicationResponse(BaseModel):
+    code: str
+    status: str
+    message: str | None = None
+    applicant_code: str
+    applicant_name: str
+    applicant_email: str
+    community_code: str = ""
+    community_name: str = ""
+    created_at: str
+    reviewed_at: str | None = None

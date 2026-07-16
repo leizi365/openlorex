@@ -5,10 +5,12 @@ export type CommunitySummaryDto = {
   code: string;
   name: string;
   description: string | null;
+  is_public: boolean;
   owner_code: string;
   owner_name: string;
   member_count: number;
-  my_role: string;
+  my_role: string | null;
+  my_application_status: string | null;
   created_at: string;
 };
 
@@ -35,8 +37,25 @@ export type InvitationDto = {
   inviter_name?: string;
 };
 
+export type JoinApplicationDto = {
+  code: string;
+  status: string;
+  message: string | null;
+  applicant_code: string;
+  applicant_name: string;
+  applicant_email: string;
+  community_code?: string;
+  community_name?: string;
+  created_at: string;
+  reviewed_at: string | null;
+};
+
 export async function fetchCommunities(options?: { signal?: AbortSignal }) {
   return apiRequest<CommunitySummaryDto[]>('/communities', options);
+}
+
+export async function fetchPublicCommunities(options?: { signal?: AbortSignal }) {
+  return apiRequest<CommunitySummaryDto[]>('/communities/public', options);
 }
 
 export async function fetchCommunity(code: string) {
@@ -50,6 +69,7 @@ export async function fetchCommunityMembers(code: string) {
 export async function createCommunity(input: {
   name: string;
   description?: string | null;
+  is_public?: boolean;
 }) {
   return apiRequest<CommunitySummaryDto>('/communities', {
     method: 'POST',
@@ -59,7 +79,11 @@ export async function createCommunity(input: {
 
 export async function updateCommunity(
   code: string,
-  input: { name?: string; description?: string | null }
+  input: {
+    name?: string;
+    description?: string | null;
+    is_public?: boolean;
+  }
 ) {
   return apiRequest<CommunitySummaryDto>(`/communities/${code}`, {
     method: 'PATCH',
@@ -103,6 +127,40 @@ export async function revokeInvitation(communityCode: string, inviteCode: string
   await apiRequest<null>(`/communities/${communityCode}/invitations/${inviteCode}`, {
     method: 'DELETE',
   });
+}
+
+export async function applyToJoinCommunity(
+  communityCode: string,
+  message?: string | null
+) {
+  return apiRequest<JoinApplicationDto>(`/communities/${communityCode}/applications`, {
+    method: 'POST',
+    body: { message: message ?? null },
+  });
+}
+
+export async function fetchJoinApplications(communityCode: string) {
+  return apiRequest<JoinApplicationDto[]>(`/communities/${communityCode}/applications`);
+}
+
+export async function approveJoinApplication(
+  communityCode: string,
+  applicationCode: string
+) {
+  return apiRequest<JoinApplicationDto>(
+    `/communities/${communityCode}/applications/${applicationCode}/approve`,
+    { method: 'POST' }
+  );
+}
+
+export async function rejectJoinApplication(
+  communityCode: string,
+  applicationCode: string
+) {
+  return apiRequest<JoinApplicationDto>(
+    `/communities/${communityCode}/applications/${applicationCode}/reject`,
+    { method: 'POST' }
+  );
 }
 
 export async function fetchMyInvitations() {

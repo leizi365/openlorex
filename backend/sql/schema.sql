@@ -75,12 +75,14 @@ CREATE TABLE IF NOT EXISTS communities (
   name         VARCHAR(100) NOT NULL COMMENT '社区名称',
   description  TEXT         NULL COMMENT '社区描述',
   owner_id     BIGINT       NOT NULL COMMENT '创建者 id',
+  is_public    TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '开放社区 0私密 1开放（可见并可申请加入）',
   deleted      TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '软删除',
   created_at   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   updated_at   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   PRIMARY KEY (id),
   UNIQUE KEY uk_communities_code (code),
   KEY idx_communities_owner (owner_id),
+  KEY idx_communities_public (is_public, deleted),
   KEY idx_communities_deleted (deleted),
   CONSTRAINT fk_communities_owner FOREIGN KEY (owner_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -119,6 +121,27 @@ CREATE TABLE IF NOT EXISTS community_invitations (
   CONSTRAINT fk_inv_inviter FOREIGN KEY (inviter_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS community_join_applications (
+  id             BIGINT       NOT NULL AUTO_INCREMENT,
+  code           VARCHAR(32)  NOT NULL COMMENT '对外业务编码',
+  community_id   BIGINT       NOT NULL,
+  applicant_id   BIGINT       NOT NULL COMMENT '申请人用户 id',
+  status         VARCHAR(16)  NOT NULL DEFAULT 'pending' COMMENT 'pending/approved/rejected',
+  message        TEXT         NULL COMMENT '申请留言',
+  reviewed_by    BIGINT       NULL COMMENT '审核人用户 id',
+  reviewed_at    DATETIME(3)  NULL,
+  deleted        TINYINT(1)   NOT NULL DEFAULT 0,
+  created_at     DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at     DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_community_join_applications_code (code),
+  KEY idx_cja_community_status (community_id, status, deleted),
+  KEY idx_cja_applicant (applicant_id, status, deleted),
+  CONSTRAINT fk_cja_community FOREIGN KEY (community_id) REFERENCES communities(id),
+  CONSTRAINT fk_cja_applicant FOREIGN KEY (applicant_id) REFERENCES users(id),
+  CONSTRAINT fk_cja_reviewed_by FOREIGN KEY (reviewed_by) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS page_permissions (
   id            BIGINT      NOT NULL AUTO_INCREMENT,
   page_id       BIGINT      NOT NULL,
@@ -146,3 +169,8 @@ CREATE TABLE IF NOT EXISTS page_permissions (
 --   ADD KEY idx_pages_container (container_page_id, deleted),
 --   ADD KEY idx_pages_user_container_sort (user_id, container_page_id, sort_order),
 --   ADD CONSTRAINT fk_pages_container FOREIGN KEY (container_page_id) REFERENCES pages(id);
+-- 已有库升级（社区开放/私密）：
+-- ALTER TABLE communities
+--   ADD COLUMN is_public TINYINT(1) NOT NULL DEFAULT 0 COMMENT '开放社区 0私密 1开放' AFTER owner_id,
+--   ADD KEY idx_communities_public (is_public, deleted);
+-- 已有库升级（社区加入申请表）：见上方 community_join_applications 建表语句。

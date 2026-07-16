@@ -7,6 +7,7 @@ from app.schemas.community import (
     CommunityCreateRequest,
     CommunityUpdateRequest,
     InviteCreateRequest,
+    JoinApplicationCreateRequest,
     UpdateMemberRoleRequest,
 )
 from app.services.community_service import CommunityService
@@ -24,6 +25,7 @@ def create_community(
         current_user.user_id,
         name=body.name,
         description=body.description,
+        is_public=body.is_public,
     )
     return success(data.model_dump())
 
@@ -34,6 +36,15 @@ def list_communities(
     service: CommunityService = Depends(get_community_service),
 ):
     data = service.list_communities(current_user.user_id)
+    return success([item.model_dump() for item in data])
+
+
+@router.get("/public")
+def list_public_communities(
+    current_user: CurrentUser = Depends(get_current_user),
+    service: CommunityService = Depends(get_community_service),
+):
+    data = service.list_public_communities(current_user.user_id)
     return success([item.model_dump() for item in data])
 
 
@@ -59,6 +70,7 @@ def update_community(
         code,
         name=body.name,
         description=body.description,
+        is_public=body.is_public,
     )
     return success(data.model_dump())
 
@@ -80,6 +92,8 @@ def list_members(
     service: CommunityService = Depends(get_community_service),
 ):
     data = service.get_community(current_user.user_id, code)
+    if not data.my_role:
+        return success([])
     return success([item.model_dump() for item in data.members])
 
 
@@ -140,6 +154,62 @@ def revoke_invitation(
 ):
     service.revoke_invitation(current_user.user_id, code, invite_code)
     return success(message="邀请已撤销")
+
+
+@router.post("/{code}/applications")
+def apply_to_join(
+    code: str,
+    body: JoinApplicationCreateRequest | None = None,
+    current_user: CurrentUser = Depends(get_current_user),
+    service: CommunityService = Depends(get_community_service),
+):
+    payload = body or JoinApplicationCreateRequest()
+    data = service.apply_to_join(
+        current_user.user_id,
+        code,
+        message=payload.message,
+    )
+    return success(data.model_dump())
+
+
+@router.get("/{code}/applications")
+def list_join_applications(
+    code: str,
+    current_user: CurrentUser = Depends(get_current_user),
+    service: CommunityService = Depends(get_community_service),
+):
+    data = service.list_join_applications(current_user.user_id, code)
+    return success([item.model_dump() for item in data])
+
+
+@router.post("/{code}/applications/{application_code}/approve")
+def approve_join_application(
+    code: str,
+    application_code: str,
+    current_user: CurrentUser = Depends(get_current_user),
+    service: CommunityService = Depends(get_community_service),
+):
+    data = service.approve_join_application(
+        current_user.user_id,
+        code,
+        application_code,
+    )
+    return success(data.model_dump(), message="已同意加入申请")
+
+
+@router.post("/{code}/applications/{application_code}/reject")
+def reject_join_application(
+    code: str,
+    application_code: str,
+    current_user: CurrentUser = Depends(get_current_user),
+    service: CommunityService = Depends(get_community_service),
+):
+    data = service.reject_join_application(
+        current_user.user_id,
+        code,
+        application_code,
+    )
+    return success(data.model_dump(), message="已拒绝加入申请")
 
 
 @router.get("/{code}/shared-pages")

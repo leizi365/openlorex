@@ -17,14 +17,17 @@ from app.core.permissions import (
     INVITE_EXPIRED,
     INVITE_PENDING,
     INVITE_REVOKED,
+    JOIN_APPROVED,
+    JOIN_PENDING,
+    JOIN_REJECTED,
     PermissionLevel,
     permission_from_db,
-    ROLE_ADMIN,
     ROLE_MEMBER,
     ROLE_OWNER,
 )
 from app.models.community import Community
 from app.models.community_invitation import CommunityInvitation
+from app.models.community_join_application import CommunityJoinApplication
 from app.models.community_member import CommunityMember
 from app.models.page import Page
 from app.models.page_permission import PagePermission
@@ -34,6 +37,7 @@ from app.schemas.community import (
     CommunityMemberSummary,
     CommunitySummary,
     InvitationResponse,
+    JoinApplicationResponse,
 )
 from app.schemas.page_permission import PageAccessVia, PagePermissionGrantee, SharedPageSummary
 from app.services.page_access_service import PageAccessService
@@ -47,12 +51,23 @@ class CommunityService:
         self.db = db
         self.access = PageAccessService(db)
 
-    def create_community(self, user_id: int, *, name: str, description: str | None) -> CommunitySummary:
+    def create_community(
+        self,
+        user_id: int,
+        *,
+        name: str,
+        description: str | None,
+        is_public: bool = False,
+    ) -> CommunitySummary:
+        normalized_name = name.strip()
+        self._ensure_unique_owner_name(user_id, normalized_name)
+
         community = Community(
             code=Community.generate_code(),
-            name=name.strip(),
+            name=normalized_name,
             description=description.strip() if description else None,
             owner_id=user_id,
+            is_public=is_public,
         )
         self.db.add(community)
         self.db.flush()
@@ -92,19 +107,52 @@ class CommunityService:
             result.append(self._to_summary(community, owner, role, member_count))
         return result
 
+    def list_public_communities(self, user_id: int) -> list[CommunitySummary]:
+        rows = (
+            self.db.query(Community)
+            .filter(
+                Community.is_public.is_(True),
+                Community.deleted.is_(False),
+            )
+            .order_by(Community.updated_at.desc())
+            .all()
+        )
+
+        result: list[CommunitySummary] = []
+        for community in rows:
+            owner = self._get_user(community.owner_id)
+            membership = self._get_membership(community.id, user_id)
+            application = None if membership else self._get_pending_application(
+                community.id, user_id
+            )
+            result.append(
+                self._to_summary(
+                    community,
+                    owner,
+                    membership.role if membership else None,
+                    self._count_members(community.id),
+                    my_application_status=application.status if application else None,
+                )
+            )
+        return result
+
     def get_community(self, user_id: int, code: str) -> CommunityDetail:
         community = self._get_active_community(code)
         membership = self._get_membership(community.id, user_id)
-        if not membership:
+        if not membership and not community.is_public:
             raise AppException(ErrorCode.NOT_COMMUNITY_MEMBER, "不是社区成员")
 
         owner = self._get_user(community.owner_id)
-        members = self._list_members(community.id)
+        members = self._list_members(community.id) if membership else []
+        application = None if membership else self._get_pending_application(
+            community.id, user_id
+        )
         summary = self._to_summary(
             community,
             owner,
-            membership.role,
-            len(members),
+            membership.role if membership else None,
+            self._count_members(community.id),
+            my_application_status=application.status if application else None,
         )
         return CommunityDetail(**summary.model_dump(), members=members)
 
@@ -115,14 +163,26 @@ class CommunityService:
         *,
         name: str | None,
         description: str | None,
+        is_public: bool | None = None,
     ) -> CommunitySummary:
         community = self._get_active_community(code)
         self._require_admin(community.id, user_id)
 
         if name is not None:
-            community.name = name.strip()
+            normalized_name = name.strip()
+            if not normalized_name:
+                raise AppException(ErrorCode.BAD_REQUEST, "社区名称不能为空")
+            if normalized_name != community.name:
+                self._ensure_unique_owner_name(
+                    community.owner_id,
+                    normalized_name,
+                    exclude_community_id=community.id,
+                )
+            community.name = normalized_name
         if description is not None:
             community.description = description.strip() or None
+        if is_public is not None:
+            community.is_public = is_public
 
         self.db.commit()
         self.db.refresh(community)
@@ -352,15 +412,7 @@ class CommunityService:
             raise AppException(ErrorCode.INVITE_INVALID, "邀请无效")
 
         community = self._get_active_community_by_id(invitation.community_id)
-        membership = self._get_membership(community.id, user_id)
-        if not membership:
-            self.db.add(
-                CommunityMember(
-                    community_id=community.id,
-                    user_id=user_id,
-                    role=ROLE_MEMBER,
-                )
-            )
+        self._ensure_membership(community.id, user_id)
 
         invitation.status = INVITE_ACCEPTED
         invitation.accepted_at = datetime.now(timezone.utc)
@@ -374,6 +426,108 @@ class CommunityService:
             ROLE_MEMBER,
             self._count_members(community.id),
         )
+
+    def apply_to_join(
+        self,
+        user_id: int,
+        community_code: str,
+        *,
+        message: str | None = None,
+    ) -> JoinApplicationResponse:
+        community = self._get_active_community(community_code)
+        if not community.is_public:
+            raise AppException(ErrorCode.COMMUNITY_NOT_PUBLIC, "仅开放社区支持申请加入")
+
+        if self._get_membership(community.id, user_id):
+            raise AppException(ErrorCode.CONFLICT, "你已是社区成员")
+
+        pending = self._get_pending_application(community.id, user_id)
+        if pending:
+            raise AppException(ErrorCode.CONFLICT, "你已提交过加入申请，请等待审核")
+
+        application = CommunityJoinApplication(
+            code=CommunityJoinApplication.generate_code(),
+            community_id=community.id,
+            applicant_id=user_id,
+            status=JOIN_PENDING,
+            message=message.strip() if message else None,
+        )
+        self.db.add(application)
+        self.db.commit()
+        self.db.refresh(application)
+
+        applicant = self._get_user(user_id)
+        return self._to_application_response(application, applicant, community)
+
+    def list_join_applications(
+        self,
+        user_id: int,
+        community_code: str,
+    ) -> list[JoinApplicationResponse]:
+        community = self._get_active_community(community_code)
+        self._require_owner(community, user_id)
+
+        rows = (
+            self.db.query(CommunityJoinApplication, User)
+            .join(User, User.id == CommunityJoinApplication.applicant_id)
+            .filter(
+                CommunityJoinApplication.community_id == community.id,
+                CommunityJoinApplication.status == JOIN_PENDING,
+                CommunityJoinApplication.deleted.is_(False),
+                User.deleted.is_(False),
+            )
+            .order_by(CommunityJoinApplication.created_at.asc())
+            .all()
+        )
+        return [
+            self._to_application_response(application, applicant, community)
+            for application, applicant in rows
+        ]
+
+    def approve_join_application(
+        self,
+        user_id: int,
+        community_code: str,
+        application_code: str,
+    ) -> JoinApplicationResponse:
+        community = self._get_active_community(community_code)
+        self._require_owner(community, user_id)
+
+        application = self._get_pending_application_by_code(
+            application_code, community.id
+        )
+        self._ensure_membership(community.id, application.applicant_id)
+
+        application.status = JOIN_APPROVED
+        application.reviewed_by = user_id
+        application.reviewed_at = datetime.now(timezone.utc)
+        self.db.commit()
+        self.db.refresh(application)
+        self.access._community_ids_cache.pop(application.applicant_id, None)
+
+        applicant = self._get_user(application.applicant_id)
+        return self._to_application_response(application, applicant, community)
+
+    def reject_join_application(
+        self,
+        user_id: int,
+        community_code: str,
+        application_code: str,
+    ) -> JoinApplicationResponse:
+        community = self._get_active_community(community_code)
+        self._require_owner(community, user_id)
+
+        application = self._get_pending_application_by_code(
+            application_code, community.id
+        )
+        application.status = JOIN_REJECTED
+        application.reviewed_by = user_id
+        application.reviewed_at = datetime.now(timezone.utc)
+        self.db.commit()
+        self.db.refresh(application)
+
+        applicant = self._get_user(application.applicant_id)
+        return self._to_application_response(application, applicant, community)
 
     def list_community_shared_pages(
         self,
@@ -494,6 +648,27 @@ class CommunityService:
             raise AppException(ErrorCode.COMMUNITY_FORBIDDEN, "无社区管理权限")
         return membership
 
+    def _require_owner(self, community: Community, user_id: int) -> None:
+        if community.owner_id != user_id:
+            raise AppException(ErrorCode.COMMUNITY_FORBIDDEN, "只有创建者可以审核加入申请")
+
+    def _ensure_unique_owner_name(
+        self,
+        owner_id: int,
+        name: str,
+        *,
+        exclude_community_id: int | None = None,
+    ) -> None:
+        query = self.db.query(Community).filter(
+            Community.owner_id == owner_id,
+            Community.name == name,
+            Community.deleted.is_(False),
+        )
+        if exclude_community_id is not None:
+            query = query.filter(Community.id != exclude_community_id)
+        if query.first():
+            raise AppException(ErrorCode.CONFLICT, "你已创建过同名社区")
+
     def _get_membership(self, community_id: int, user_id: int) -> CommunityMember | None:
         return (
             self.db.query(CommunityMember)
@@ -504,6 +679,63 @@ class CommunityService:
             )
             .first()
         )
+
+    def _ensure_membership(self, community_id: int, user_id: int) -> CommunityMember:
+        membership = (
+            self.db.query(CommunityMember)
+            .filter(
+                CommunityMember.community_id == community_id,
+                CommunityMember.user_id == user_id,
+            )
+            .first()
+        )
+        if membership:
+            membership.deleted = False
+            if membership.role != ROLE_OWNER:
+                membership.role = ROLE_MEMBER
+            return membership
+
+        membership = CommunityMember(
+            community_id=community_id,
+            user_id=user_id,
+            role=ROLE_MEMBER,
+        )
+        self.db.add(membership)
+        return membership
+
+    def _get_pending_application(
+        self,
+        community_id: int,
+        user_id: int,
+    ) -> CommunityJoinApplication | None:
+        return (
+            self.db.query(CommunityJoinApplication)
+            .filter(
+                CommunityJoinApplication.community_id == community_id,
+                CommunityJoinApplication.applicant_id == user_id,
+                CommunityJoinApplication.status == JOIN_PENDING,
+                CommunityJoinApplication.deleted.is_(False),
+            )
+            .first()
+        )
+
+    def _get_pending_application_by_code(
+        self,
+        application_code: str,
+        community_id: int,
+    ) -> CommunityJoinApplication:
+        application = (
+            self.db.query(CommunityJoinApplication)
+            .filter(
+                CommunityJoinApplication.code == application_code,
+                CommunityJoinApplication.community_id == community_id,
+                CommunityJoinApplication.deleted.is_(False),
+            )
+            .first()
+        )
+        if not application or application.status != JOIN_PENDING:
+            raise AppException(ErrorCode.JOIN_APPLICATION_INVALID, "加入申请无效或已处理")
+        return application
 
     def is_member(self, community_id: int, user_id: int) -> bool:
         return self._get_membership(community_id, user_id) is not None
@@ -585,18 +817,45 @@ class CommunityService:
         self,
         community: Community,
         owner: User,
-        my_role: str,
+        my_role: str | None,
         member_count: int,
+        *,
+        my_application_status: str | None = None,
     ) -> CommunitySummary:
         return CommunitySummary(
             code=community.code,
             name=community.name,
             description=community.description,
+            is_public=community.is_public,
             owner_code=owner.code,
             owner_name=owner.name,
             member_count=member_count,
             my_role=my_role,
+            my_application_status=my_application_status,
             created_at=self._format_dt(community.created_at),
+        )
+
+    def _to_application_response(
+        self,
+        application: CommunityJoinApplication,
+        applicant: User,
+        community: Community,
+    ) -> JoinApplicationResponse:
+        return JoinApplicationResponse(
+            code=application.code,
+            status=application.status,
+            message=application.message,
+            applicant_code=applicant.code,
+            applicant_name=applicant.name,
+            applicant_email=applicant.email,
+            community_code=community.code,
+            community_name=community.name,
+            created_at=self._format_dt(application.created_at),
+            reviewed_at=(
+                self._format_dt(application.reviewed_at)
+                if application.reviewed_at
+                else None
+            ),
         )
 
     @staticmethod

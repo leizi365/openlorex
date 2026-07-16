@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import BigInteger, ForeignKey, String, Text
+from sqlalchemy import BigInteger, Boolean, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import BaseModel
@@ -16,6 +16,14 @@ class Community(BaseModel):
         ForeignKey("users.id"),
         nullable=False,
         index=True,
+    )
+    is_public: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="0",
+        index=True,
+        comment="开放社区：所有人可见并可申请加入",
     )
 
     @classmethod

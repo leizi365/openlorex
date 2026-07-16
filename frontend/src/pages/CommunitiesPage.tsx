@@ -5,16 +5,23 @@ import { toast } from 'sonner';
 
 import {
   acceptInvitation,
+  applyToJoinCommunity,
   createCommunity,
   fetchCommunities,
   fetchMyInvitations,
+  fetchPublicCommunities,
 } from '@/lib/api/communities';
 import type { CommunitySummaryDto, InvitationDto } from '@/lib/api/communities';
 import { CommunityAvatar } from '@/features/communities/CommunityAvatar';
 import { CommunityListItem } from '@/features/communities/CommunityListItem';
-import { formatCommunityRole } from '@/features/communities/presentation';
+import {
+  formatCommunityRole,
+  formatCommunityVisibility,
+} from '@/features/communities/presentation';
 import { getNavLabelFontClass } from '@/lib/nav-font';
 import { cn } from '@/lib/utils';
+
+type ListTab = 'mine' | 'public';
 
 function RoleBadge({ role }: { role: string }) {
   return (
@@ -24,10 +31,20 @@ function RoleBadge({ role }: { role: string }) {
   );
 }
 
+function VisibilityBadge({ isPublic }: { isPublic: boolean }) {
+  return (
+    <span className="inline-flex rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+      {formatCommunityVisibility(isPublic)}
+    </span>
+  );
+}
+
 function CommunityRow({
   community,
+  showRole = true,
 }: {
   community: CommunitySummaryDto;
+  showRole?: boolean;
 }) {
   return (
     <CommunityListItem>
@@ -45,12 +62,87 @@ function CommunityRow({
             <span className="font-nav-cjk text-xs text-subtle-foreground">
               {community.member_count} 位成员
             </span>
-            <RoleBadge role={community.my_role} />
+            <VisibilityBadge isPublic={community.is_public} />
+            {showRole && community.my_role ? (
+              <RoleBadge role={community.my_role} />
+            ) : null}
           </div>
         </div>
 
         <ChevronRight className="size-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:text-muted-foreground" />
       </Link>
+    </CommunityListItem>
+  );
+}
+
+function PublicCommunityRow({
+  community,
+  onApplied,
+}: {
+  community: CommunitySummaryDto;
+  onApplied: () => void;
+}) {
+  const [applying, setApplying] = React.useState(false);
+  const isMember = Boolean(community.my_role);
+  const isPending = community.my_application_status === 'pending';
+
+  const handleApply = async () => {
+    setApplying(true);
+    try {
+      await applyToJoinCommunity(community.code);
+      toast.success(`已申请加入「${community.name}」`);
+      onApplied();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '申请失败');
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  return (
+    <CommunityListItem className="flex items-center gap-4 px-2 py-2.5">
+      <Link
+        to={`/communities/${community.code}`}
+        className="flex min-w-0 flex-1 items-center gap-4"
+      >
+        <CommunityAvatar name={community.name} seed={community.code} />
+        <div className="min-w-0 flex-1">
+          <p className={cn('truncate', getNavLabelFontClass(community.name))}>
+            {community.name}
+          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <span className="font-nav-cjk text-xs text-subtle-foreground">
+              {community.member_count} 位成员 · 创建者 {community.owner_name}
+            </span>
+            <VisibilityBadge isPublic />
+            {isMember && community.my_role ? (
+              <RoleBadge role={community.my_role} />
+            ) : null}
+          </div>
+        </div>
+      </Link>
+
+      {isMember ? (
+        <Link
+          to={`/communities/${community.code}`}
+          className="inline-flex h-8 shrink-0 items-center rounded-md bg-muted/70 px-2.5 font-nav-cjk text-[13px] font-medium text-foreground/80 transition-colors hover:bg-muted"
+        >
+          查看
+        </Link>
+      ) : isPending ? (
+        <span className="inline-flex h-8 shrink-0 items-center rounded-md bg-muted/60 px-2.5 font-nav-cjk text-[13px] text-muted-foreground">
+          审核中
+        </span>
+      ) : (
+        <button
+          type="button"
+          disabled={applying}
+          className="inline-flex h-8 shrink-0 items-center rounded-md bg-sidebar-primary/14 px-2.5 font-nav-cjk text-[13px] font-medium text-sidebar-primary transition-colors hover:bg-sidebar-primary/22 disabled:opacity-50"
+          onClick={() => void handleApply()}
+        >
+          {applying ? '申请中…' : '申请加入'}
+        </button>
+      )}
     </CommunityListItem>
   );
 }
@@ -105,19 +197,26 @@ function PendingInvitationRow({
 
 export function CommunitiesPage() {
   const [communities, setCommunities] = React.useState<CommunitySummaryDto[]>([]);
+  const [publicCommunities, setPublicCommunities] = React.useState<CommunitySummaryDto[]>(
+    []
+  );
   const [invitations, setInvitations] = React.useState<InvitationDto[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [name, setName] = React.useState('');
+  const [isPublic, setIsPublic] = React.useState(false);
   const [creating, setCreating] = React.useState(false);
+  const [listTab, setListTab] = React.useState<ListTab>('mine');
 
   const load = React.useCallback(async () => {
     setLoading(true);
     try {
-      const [communityItems, invitationItems] = await Promise.all([
+      const [communityItems, publicItems, invitationItems] = await Promise.all([
         fetchCommunities(),
+        fetchPublicCommunities(),
         fetchMyInvitations(),
       ]);
       setCommunities(communityItems);
+      setPublicCommunities(publicItems);
       setInvitations(invitationItems);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '加载社区失败');
@@ -138,9 +237,10 @@ export function CommunitiesPage() {
 
     setCreating(true);
     try {
-      await createCommunity({ name: name.trim() });
+      await createCommunity({ name: name.trim(), is_public: isPublic });
       setName('');
-      toast.success('社区已创建');
+      toast.success(isPublic ? '开放社区已创建' : '私密社区已创建');
+      setListTab('mine');
       await load();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '创建社区失败');
@@ -163,6 +263,15 @@ export function CommunitiesPage() {
 
         <section className="mb-8">
           <div className="flex items-center gap-2">
+            <select
+              aria-label="社区可见性"
+              className="h-8 shrink-0 rounded-md border-0 bg-muted/50 px-2 font-nav-cjk text-[13px] text-foreground outline-none transition focus-visible:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring/20"
+              value={isPublic ? 'public' : 'private'}
+              onChange={(event) => setIsPublic(event.target.value === 'public')}
+            >
+              <option value="private">私密</option>
+              <option value="public">开放</option>
+            </select>
             <input
               className="h-8 flex-1 rounded-md border-0 bg-muted/50 px-3 text-[13px] outline-none transition placeholder:text-muted-foreground focus-visible:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring/20"
               placeholder="创建新社区"
@@ -207,20 +316,85 @@ export function CommunitiesPage() {
               </section>
             ) : null}
 
-            {communities.length === 0 ? (
+            <nav
+              className="mb-4 flex items-baseline gap-3 text-sm"
+              role="tablist"
+              aria-label="社区列表"
+            >
+              {(
+                [
+                  { id: 'mine' as const, label: '我的社区', count: communities.length },
+                  {
+                    id: 'public' as const,
+                    label: '开放社区',
+                    count: publicCommunities.length,
+                  },
+                ] as const
+              ).map(({ id, label, count }, index) => {
+                const isActive = listTab === id;
+                return (
+                  <React.Fragment key={id}>
+                    {index > 0 ? (
+                      <span aria-hidden className="font-nav-cjk text-subtle-foreground/40">
+                        /
+                      </span>
+                    ) : null}
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={isActive}
+                      onClick={() => setListTab(id)}
+                      className={cn(
+                        'inline-flex items-baseline gap-1.5 select-none font-nav-cjk',
+                        isActive ? 'text-foreground' : 'text-subtle-foreground'
+                      )}
+                    >
+                      <span>{label}</span>
+                      <span className="font-nav text-xs text-muted-foreground tabular-nums">
+                        {count}
+                      </span>
+                    </button>
+                  </React.Fragment>
+                );
+              })}
+            </nav>
+
+            {listTab === 'mine' ? (
+              communities.length === 0 ? (
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/70 px-6 py-16 text-center">
+                  <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-muted/60">
+                    <Users className="size-7 text-muted-foreground/70" strokeWidth={1.5} />
+                  </div>
+                  <p className="text-sm font-medium text-foreground/80">还没有加入任何社区</p>
+                  <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+                    创建社区并邀请成员，或浏览开放社区申请加入
+                  </p>
+                </div>
+              ) : (
+                <ul className="space-y-1">
+                  {communities.map((community) => (
+                    <CommunityRow key={community.code} community={community} />
+                  ))}
+                </ul>
+              )
+            ) : publicCommunities.length === 0 ? (
               <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/70 px-6 py-16 text-center">
                 <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-muted/60">
                   <Users className="size-7 text-muted-foreground/70" strokeWidth={1.5} />
                 </div>
-                <p className="text-sm font-medium text-foreground/80">还没有加入任何社区</p>
+                <p className="text-sm font-medium text-foreground/80">暂无开放社区</p>
                 <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                  创建社区并邀请成员，一起协作共享知识
+                  创建开放社区后，其他人即可浏览并申请加入
                 </p>
               </div>
             ) : (
               <ul className="space-y-1">
-                {communities.map((community) => (
-                  <CommunityRow key={community.code} community={community} />
+                {publicCommunities.map((community) => (
+                  <PublicCommunityRow
+                    key={community.code}
+                    community={community}
+                    onApplied={() => void load()}
+                  />
                 ))}
               </ul>
             )}

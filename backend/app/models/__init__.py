@@ -1,6 +1,7 @@
 from app.models.asset import Asset
 from app.models.community import Community
 from app.models.community_invitation import CommunityInvitation
+from app.models.community_join_application import CommunityJoinApplication
 from app.models.community_member import CommunityMember
 from app.models.page import Page
 from app.models.page_permission import PagePermission
@@ -13,5 +14,6 @@ __all__ = [
     "Community",
     "CommunityMember",
     "CommunityInvitation",
+    "CommunityJoinApplication",
     "PagePermission",
 ]

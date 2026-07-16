@@ -292,7 +292,18 @@ location /api/ {
 
 ### 社区 `/api/v1/communities`
 
-创建/管理社区、成员、邀请、社区共享页面等，均需登录。
+创建/管理社区、成员、邀请、加入申请、社区共享页面等，均需登录。
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `` | 创建社区（`is_public` 选择开放/私密） |
+| GET | `` | 我加入的社区 |
+| GET | `/public` | 开放社区列表（所有人可见） |
+| GET | `/{code}` | 社区详情（开放社区非成员也可查看基本信息） |
+| POST | `/{code}/applications` | 申请加入开放社区 |
+| GET | `/{code}/applications` | 待审核加入申请（创建者） |
+| POST | `/{code}/applications/{application_code}/approve` | 同意申请（创建者） |
+| POST | `/{code}/applications/{application_code}/reject` | 拒绝申请（创建者） |
 
 ### 邀请 `/api/v1/invitations`
 

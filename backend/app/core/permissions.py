@@ -20,6 +20,11 @@ INVITE_ACCEPTED = "accepted"
 INVITE_EXPIRED = "expired"
 INVITE_REVOKED = "revoked"
 
+# 加入申请状态
+JOIN_PENDING = "pending"
+JOIN_APPROVED = "approved"
+JOIN_REJECTED = "rejected"
+
 # grantee 类型
 GRANTEE_USER = "user"
 GRANTEE_COMMUNITY = "community"

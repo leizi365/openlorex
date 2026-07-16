@@ -39,3 +39,7 @@ const ROLE_LABELS: Record<string, string> = {
 export function formatCommunityRole(role: string) {
   return ROLE_LABELS[role] ?? role;
 }
+
+export function formatCommunityVisibility(isPublic: boolean) {
+  return isPublic ? '开放' : '私密';
+}
