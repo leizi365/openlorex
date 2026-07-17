@@ -187,10 +187,14 @@ export function RegisterPage() {
           </p>
         ) : null}
 
-        <Button type="submit" className="h-10 w-full" disabled={submitting}>
+        <Button
+          type="submit"
+          className="h-8 w-full bg-sidebar-primary/14 px-2.5 font-nav-cjk text-[13px] font-medium text-sidebar-primary shadow-none hover:bg-sidebar-primary/22 hover:text-sidebar-primary"
+          disabled={submitting}
+        >
           {submitting ? (
             <>
-              <Loader2 className="size-4 animate-spin" />
+              <Loader2 className="size-3.5 animate-spin" />
               注册中…
             </>
           ) : (

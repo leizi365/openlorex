@@ -256,7 +256,7 @@ export function SettingsPage() {
 
               <Button
                 type="submit"
-                className="h-10"
+                className="h-8 bg-sidebar-primary/14 px-2.5 font-nav-cjk text-[13px] font-medium text-sidebar-primary shadow-none hover:bg-sidebar-primary/22 hover:text-sidebar-primary"
                 disabled={
                   !isAuthenticated ||
                   savingNickname ||
@@ -265,8 +265,8 @@ export function SettingsPage() {
               >
                 {savingNickname ? (
                   <>
-                    <Loader2 className="size-4 animate-spin" />
-                    保存中...
+                    <Loader2 className="size-3.5 animate-spin" />
+                    保存中…
                   </>
                 ) : (
                   '保存昵称'
@@ -327,13 +327,13 @@ export function SettingsPage() {
 
               <Button
                 type="submit"
-                className="h-10"
+                className="h-8 bg-sidebar-primary/14 px-2.5 font-nav-cjk text-[13px] font-medium text-sidebar-primary shadow-none hover:bg-sidebar-primary/22 hover:text-sidebar-primary"
                 disabled={!isAuthenticated || savingPassword}
               >
                 {savingPassword ? (
                   <>
-                    <Loader2 className="size-4 animate-spin" />
-                    更新中...
+                    <Loader2 className="size-3.5 animate-spin" />
+                    更新中…
                   </>
                 ) : (
                   '更新密码'
