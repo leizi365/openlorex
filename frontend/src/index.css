@@ -41,7 +41,8 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --font-heading: var(--font-sans);
-  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Segoe UI Symbol', 'Android Emoji', emoji;
+  /* 不把 Emoji 字体放进正文栈，避免 0-9 等字符被当成彩色 keycap 渲染 */
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
   /* Latin → Geist; CJK → Noto Sans SC (browser picks per glyph) */
   --font-nav: 'Geist Variable', 'Noto Sans SC Variable', 'PingFang SC',
     'Hiragino Sans GB', 'Microsoft YaHei', ui-sans-serif, system-ui, sans-serif;
@@ -144,7 +145,8 @@
   }
   html {
     @apply font-sans;
-    font-variant-emoji: emoji;
+    /* text：避免 0-9#* 被升级成 emoji 色块数字（线上系统有彩色 Emoji 字体时更明显） */
+    font-variant-emoji: text;
   }
 
   /* 输入框选中：避免浏览器默认蓝底白字 */
@@ -183,7 +185,7 @@
   }
 
   .slate-editor {
-    font-variant-emoji: emoji;
+    font-variant-emoji: text;
   }
 
   .font-nav {

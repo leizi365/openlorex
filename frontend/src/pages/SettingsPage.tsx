@@ -256,7 +256,7 @@ export function SettingsPage() {
 
               <Button
                 type="submit"
-                className="h-8 bg-sidebar-primary/14 px-2.5 font-nav-cjk text-[13px] font-medium text-sidebar-primary shadow-none hover:bg-sidebar-primary/22 hover:text-sidebar-primary"
+                className="h-9 bg-sidebar-primary/14 px-3 font-nav-cjk text-[13px] font-medium text-sidebar-primary shadow-none hover:bg-sidebar-primary/22 hover:text-sidebar-primary"
                 disabled={
                   !isAuthenticated ||
                   savingNickname ||
@@ -327,7 +327,7 @@ export function SettingsPage() {
 
               <Button
                 type="submit"
-                className="h-8 bg-sidebar-primary/14 px-2.5 font-nav-cjk text-[13px] font-medium text-sidebar-primary shadow-none hover:bg-sidebar-primary/22 hover:text-sidebar-primary"
+                className="h-9 bg-sidebar-primary/14 px-3 font-nav-cjk text-[13px] font-medium text-sidebar-primary shadow-none hover:bg-sidebar-primary/22 hover:text-sidebar-primary"
                 disabled={!isAuthenticated || savingPassword}
               >
                 {savingPassword ? (

@@ -189,7 +189,7 @@ export function RegisterPage() {
 
         <Button
           type="submit"
-          className="h-8 w-full bg-sidebar-primary/14 px-2.5 font-nav-cjk text-[13px] font-medium text-sidebar-primary shadow-none hover:bg-sidebar-primary/22 hover:text-sidebar-primary"
+          className="h-9 w-full bg-sidebar-primary px-3 font-nav-cjk text-[13px] font-medium text-sidebar-primary-foreground shadow-none hover:bg-sidebar-primary/90 hover:text-sidebar-primary-foreground"
           disabled={submitting}
         >
           {submitting ? (
