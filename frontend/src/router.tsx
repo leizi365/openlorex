@@ -15,7 +15,8 @@ import { RouteErrorPage } from '@/pages/RouteErrorPage';
 import { PageAccessManagePage } from '@/pages/PageAccessManagePage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { SharedPagesPage } from '@/pages/SharedPagesPage';
-import { PageGate, ShortPublicPageRedirect } from '@/pages/PageGate';
+import { ShortPublicPageRedirect } from '@/pages/PageGate';
+import { EditorPage } from '@/pages/EditorPage';
 import { PublicPageView } from '@/pages/PublicPageView';
 
 function AuthLayout() {
@@ -59,11 +60,6 @@ export const router = createBrowserRouter([
         errorElement: <RouteErrorPage />,
       },
       {
-        path: '/page/:pageId',
-        element: <PageGate />,
-        errorElement: <RouteErrorPage />,
-      },
-      {
         path: '/invite/:inviteCode',
         element: (
           <RequireAuth>
@@ -88,6 +84,11 @@ export const router = createBrowserRouter([
           {
             index: true,
             element: <HomePage />,
+            errorElement: <RouteErrorPage />,
+          },
+          {
+            path: 'page/:pageId',
+            element: <EditorPage />,
             errorElement: <RouteErrorPage />,
           },
           {

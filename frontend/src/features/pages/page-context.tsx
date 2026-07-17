@@ -575,7 +575,7 @@ export function PagesProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         if (!cancelled) {
           toast.error(error instanceof Error ? error.message : '知识不存在');
-          navigate('/shared', { replace: true });
+          navigate('/', { replace: true });
         }
       } finally {
         if (!cancelled) {

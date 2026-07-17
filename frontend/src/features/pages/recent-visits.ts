@@ -13,13 +13,17 @@ export type RecentPageVisit = {
 
 export type RecentPageVisitInput = Omit<RecentPageVisit, 'visitedAt'>;
 
-function readVisits(): RecentPageVisit[] {
+function getStorageKey(userId: string) {
+  return `${RECENT_VISITS_STORAGE_KEY}:${userId}`;
+}
+
+function readVisits(userId: string): RecentPageVisit[] {
   if (typeof window === 'undefined') {
     return [];
   }
 
   try {
-    const raw = window.localStorage.getItem(RECENT_VISITS_STORAGE_KEY);
+    const raw = window.localStorage.getItem(getStorageKey(userId));
     if (!raw) {
       return [];
     }
@@ -40,22 +44,36 @@ function readVisits(): RecentPageVisit[] {
   }
 }
 
-function writeVisits(visits: RecentPageVisit[]) {
+function writeVisits(userId: string, visits: RecentPageVisit[]) {
   if (typeof window === 'undefined') {
     return;
   }
 
-  window.localStorage.setItem(RECENT_VISITS_STORAGE_KEY, JSON.stringify(visits));
+  window.localStorage.setItem(getStorageKey(userId), JSON.stringify(visits));
   window.dispatchEvent(new Event(RECENT_VISITS_UPDATED_EVENT));
 }
 
-export function getRecentPageVisits(limit = RECENT_VISITS_DISPLAY_LIMIT) {
-  return readVisits()
+export function getRecentPageVisits(
+  userId: string | null | undefined,
+  limit = RECENT_VISITS_DISPLAY_LIMIT
+) {
+  if (!userId) {
+    return [];
+  }
+
+  return readVisits(userId)
     .sort((left, right) => right.visitedAt - left.visitedAt)
     .slice(0, limit);
 }
 
-export function recordPageVisit(input: RecentPageVisitInput) {
+export function recordPageVisit(
+  userId: string | null | undefined,
+  input: RecentPageVisitInput
+) {
+  if (!userId) {
+    return;
+  }
+
   const title = input.title.trim() || '无标题';
   const nextVisit: RecentPageVisit = {
     pageId: input.pageId,
@@ -65,7 +83,7 @@ export function recordPageVisit(input: RecentPageVisitInput) {
     visitedAt: Date.now(),
   };
 
-  const visits = readVisits().filter((item) => item.pageId !== input.pageId);
+  const visits = readVisits(userId).filter((item) => item.pageId !== input.pageId);
   visits.unshift(nextVisit);
-  writeVisits(visits.slice(0, RECENT_VISITS_STORE_LIMIT));
+  writeVisits(userId, visits.slice(0, RECENT_VISITS_STORE_LIMIT));
 }

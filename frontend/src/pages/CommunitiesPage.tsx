@@ -50,15 +50,20 @@ function CommunityRow({
     <CommunityListItem>
       <Link
         to={`/communities/${community.code}`}
-        className="group flex items-center gap-4 px-2 py-2.5"
+        className="group flex items-center gap-3 px-2 py-2"
       >
-        <CommunityAvatar name={community.name} seed={community.code} />
+        <CommunityAvatar name={community.name} seed={community.code} size="sm" />
 
         <div className="min-w-0 flex-1">
-          <p className={cn('truncate', getNavLabelFontClass(community.name))}>
+          <p
+            className={cn(
+              'truncate text-sm leading-5',
+              getNavLabelFontClass(community.name)
+            )}
+          >
             {community.name}
           </p>
-          <div className="mt-1 flex flex-wrap items-center gap-2">
+          <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
             <span className="font-nav-cjk text-xs text-subtle-foreground">
               {community.member_count} 位成员
             </span>
@@ -69,7 +74,7 @@ function CommunityRow({
           </div>
         </div>
 
-        <ChevronRight className="size-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:text-muted-foreground" />
+        <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:text-muted-foreground" />
       </Link>
     </CommunityListItem>
   );
@@ -100,17 +105,22 @@ function PublicCommunityRow({
   };
 
   return (
-    <CommunityListItem className="flex items-center gap-4 px-2 py-2.5">
+    <CommunityListItem className="flex items-center gap-3 px-2 py-2">
       <Link
         to={`/communities/${community.code}`}
-        className="flex min-w-0 flex-1 items-center gap-4"
+        className="flex min-w-0 flex-1 items-center gap-3"
       >
-        <CommunityAvatar name={community.name} seed={community.code} />
+        <CommunityAvatar name={community.name} seed={community.code} size="sm" />
         <div className="min-w-0 flex-1">
-          <p className={cn('truncate', getNavLabelFontClass(community.name))}>
+          <p
+            className={cn(
+              'truncate text-sm leading-5',
+              getNavLabelFontClass(community.name)
+            )}
+          >
             {community.name}
           </p>
-          <div className="mt-1 flex flex-wrap items-center gap-2">
+          <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
             <span className="font-nav-cjk text-xs text-subtle-foreground">
               {community.member_count} 位成员 · 创建者 {community.owner_name}
             </span>
@@ -170,13 +180,19 @@ function PendingInvitationRow({
   };
 
   return (
-    <CommunityListItem className="flex items-center gap-4 px-2 py-2.5">
+    <CommunityListItem className="flex items-center gap-3 px-2 py-2">
       <CommunityAvatar
         name={invitation.community_name ?? '社区'}
         seed={invitation.community_code ?? invitation.code}
+        size="sm"
       />
       <div className="min-w-0 flex-1">
-        <p className={cn('truncate', getNavLabelFontClass(invitation.community_name ?? ''))}>
+        <p
+          className={cn(
+            'truncate text-sm leading-5',
+            getNavLabelFontClass(invitation.community_name ?? '')
+          )}
+        >
           {invitation.community_name}
         </p>
         <p className="font-nav-cjk mt-0.5 text-xs text-subtle-foreground">

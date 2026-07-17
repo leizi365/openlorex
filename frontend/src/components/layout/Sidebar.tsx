@@ -475,7 +475,12 @@ function collectDefaultCollapsedIds(nodes: PageTreeNode[]) {
   return collectExpandableIds(nodes);
 }
 
-/** Ancestor ids from root to parent of target (empty if target is root). */
+function buildPageTreeStructureKey(nodes: PageTreeNode[]): string {
+  return nodes
+    .map((node) => `${node.id}(${buildPageTreeStructureKey(node.children)})`)
+    .join(',');
+}
+
 function findAncestorIds(
   nodes: PageTreeNode[],
   targetId: string
@@ -527,6 +532,10 @@ export function Sidebar() {
     () => collectDefaultCollapsedIds(pageTree),
     [pageTree]
   );
+  const pageTreeStructureKey = React.useMemo(
+    () => buildPageTreeStructureKey(pageTree),
+    [pageTree]
+  );
   const collapsedIds = React.useMemo(() => {
     const next = new Set(defaultCollapsedIds);
     for (const [id, collapsed] of Object.entries(collapseOverrides)) {
@@ -564,10 +573,9 @@ export function Sidebar() {
 
       return changed ? next : current;
     });
-  }, [location.pathname, pageTree]);
+  }, [location.pathname, pageTreeStructureKey]);
 
   const isHome = location.pathname === '/';
-  const isShared = location.pathname === '/shared';
   const isCommunities =
     location.pathname === '/communities' ||
     location.pathname.startsWith('/communities/');
@@ -794,9 +802,7 @@ export function Sidebar() {
 
               <SidebarNavItem
                 label="共享的知识"
-                href="/shared"
-                active={isShared}
-                onNavigate={closeSidebar}
+                onClick={() => setSharedSectionCollapsed((v) => !v)}
                 collapsed={isCollapsedDesktop}
                 showTrailingAlways
                 icon={<Link2 className="size-[18px] shrink" />}

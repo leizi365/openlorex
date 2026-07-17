@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ArrowLeft, Check, ChevronRight, Pencil, UserMinus, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronRight, Globe, Lock, Pencil, UserMinus, X } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -244,13 +244,27 @@ export function CommunityDetailPage() {
     if (!community) {
       return;
     }
+    const previous = community.is_public;
+    const next = !previous;
     setTogglingVisibility(true);
+    setCommunity({ ...community, is_public: next });
     try {
-      const next = !community.is_public;
-      await updateCommunity(communityId, { is_public: next });
+      const updated = await updateCommunity(communityId, { is_public: next });
+      setCommunity((current) =>
+        current
+          ? {
+              ...current,
+              is_public: updated.is_public,
+              name: updated.name,
+              description: updated.description,
+            }
+          : current
+      );
       toast.success(next ? '已设为开放社区' : '已设为私密社区');
-      await load();
     } catch (error) {
+      setCommunity((current) =>
+        current ? { ...current, is_public: previous } : current
+      );
       toast.error(error instanceof Error ? error.message : '更新失败');
     } finally {
       setTogglingVisibility(false);
@@ -319,7 +333,7 @@ export function CommunityDetailPage() {
           返回社区列表
         </Link>
 
-        <header className="mt-5 flex items-start gap-4 border-b border-border/60 pb-6">
+        <header className="mt-5 mb-8 flex items-start gap-4">
           <CommunityAvatar name={community.name} seed={community.code} size="lg" />
           <div className="min-w-0 flex-1">
             {editingName ? (
@@ -368,14 +382,32 @@ export function CommunityDetailPage() {
                   {community.name}
                 </h1>
                 {canManage ? (
-                  <button
-                    type="button"
-                    aria-label="重命名社区"
-                    className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                    onClick={startEditName}
-                  >
-                    <Pencil className="size-3.5" />
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      aria-label="重命名社区"
+                      className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      onClick={startEditName}
+                    >
+                      <Pencil className="size-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={togglingVisibility}
+                      aria-label={
+                        community.is_public ? '改为私密社区' : '改为开放社区'
+                      }
+                      title={community.is_public ? '改为私密' : '改为开放'}
+                      className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+                      onClick={() => void handleToggleVisibility()}
+                    >
+                      {community.is_public ? (
+                        <Globe className="size-3.5" />
+                      ) : (
+                        <Lock className="size-3.5" />
+                      )}
+                    </button>
+                  </>
                 ) : null}
               </div>
             )}
@@ -390,25 +422,11 @@ export function CommunityDetailPage() {
               {community.my_role ? <RoleBadge role={community.my_role} /> : null}
               <span>创建者 {community.owner_name}</span>
             </div>
-            {canManage ? (
-              <button
-                type="button"
-                disabled={togglingVisibility}
-                className="font-nav-cjk mt-3 text-xs text-sidebar-primary transition-colors hover:underline disabled:opacity-50"
-                onClick={() => void handleToggleVisibility()}
-              >
-                {togglingVisibility
-                  ? '更新中…'
-                  : community.is_public
-                    ? '改为私密'
-                    : '改为开放'}
-              </button>
-            ) : null}
           </div>
         </header>
 
         {!isMember && community.is_public ? (
-          <section className="mt-6">
+          <section className="mb-8">
             {community.my_application_status === 'pending' ? (
               <div className="rounded-xl border border-dashed border-border/70 px-4 py-3 font-nav-cjk text-sm text-subtle-foreground">
                 你的加入申请正在等待创建者审核
@@ -427,7 +445,7 @@ export function CommunityDetailPage() {
         ) : null}
 
         {canManage ? (
-          <section className="mt-6">
+          <section className="mb-8">
             <div className="flex items-center gap-2">
               <input
                 className="h-8 flex-1 rounded-md border-0 bg-muted/50 px-3 text-[13px] outline-none transition placeholder:text-muted-foreground focus-visible:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring/20"
@@ -492,7 +510,7 @@ export function CommunityDetailPage() {
                       <CommunityListItem key={page.code}>
                         <Link
                           to={`/page/${page.code}`}
-                          className="flex items-center gap-3 px-2 py-2.5"
+                          className="flex items-center gap-3 px-2 py-2"
                         >
                           <div
                             className="flex size-9 shrink-0 items-center justify-center rounded-xl"
@@ -509,18 +527,18 @@ export function CommunityDetailPage() {
                           <div className="min-w-0 flex-1">
                             <p
                               className={cn(
-                                'truncate text-[13px] leading-5',
+                                'truncate text-sm leading-5',
                                 getNavLabelFontClass(page.title)
                               )}
                             >
                               {page.title}
                             </p>
-                            <p className="font-nav-cjk mt-0.5 truncate text-[11px] text-subtle-foreground">
+                            <p className="font-nav-cjk mt-0.5 truncate text-xs text-subtle-foreground">
                               {page.permission === 'edit' ? '可编辑' : '只读'} ·{' '}
                               {page.owner_name}
                             </p>
                           </div>
-                          <ChevronRight className="size-4 shrink-0 text-muted-foreground/50" />
+                          <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/50" />
                         </Link>
                       </CommunityListItem>
                     ))}
@@ -535,7 +553,7 @@ export function CommunityDetailPage() {
                   {community.members.map((member) => (
                     <CommunityListItem
                       key={member.user_code}
-                      className="group flex items-center gap-3 px-2 py-2.5 text-sm"
+                      className="group flex items-center gap-3 px-2 py-2"
                     >
                       <CommunityAvatar
                         name={member.name}
@@ -543,15 +561,22 @@ export function CommunityDetailPage() {
                         size="sm"
                       />
                       <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className={getNavLabelFontClass(member.name)}>{member.name}</p>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <p
+                            className={cn(
+                              'text-sm leading-5',
+                              getNavLabelFontClass(member.name)
+                            )}
+                          >
+                            {member.name}
+                          </p>
                           <RoleBadge role={member.role} />
                         </div>
                       </div>
                       {canManage && member.role !== 'owner' ? (
                         <button
                           type="button"
-                          className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-destructive opacity-0 transition-opacity hover:bg-destructive/10 group-hover:opacity-100 group-focus-within:opacity-100 max-md:opacity-100"
+                          className="inline-flex items-center gap-1 rounded-lg px-2 py-1 font-nav-cjk text-[13px] text-destructive opacity-0 transition-opacity hover:bg-destructive/10 group-hover:opacity-100 group-focus-within:opacity-100 max-md:opacity-100"
                           onClick={() => void handleRemoveMember(member.user_code)}
                         >
                           <UserMinus className="size-3.5" />
@@ -578,7 +603,7 @@ export function CommunityDetailPage() {
                     {applications.map((application) => (
                       <CommunityListItem
                         key={application.code}
-                        className="flex items-center gap-3 px-2 py-2.5 text-sm"
+                        className="flex items-center gap-3 px-2 py-2"
                       >
                         <CommunityAvatar
                           name={application.applicant_name}
@@ -586,10 +611,15 @@ export function CommunityDetailPage() {
                           size="sm"
                         />
                         <div className="min-w-0 flex-1">
-                          <p className={getNavLabelFontClass(application.applicant_name)}>
+                          <p
+                            className={cn(
+                              'text-sm leading-5',
+                              getNavLabelFontClass(application.applicant_name)
+                            )}
+                          >
                             {application.applicant_name}
                           </p>
-                          <p className="font-nav-cjk mt-0.5 truncate text-[11px] text-subtle-foreground">
+                          <p className="font-nav-cjk mt-0.5 truncate text-xs text-subtle-foreground">
                             {application.applicant_email}
                             {application.message ? ` · ${application.message}` : ''}
                           </p>
@@ -597,7 +627,7 @@ export function CommunityDetailPage() {
                         <div className="flex shrink-0 items-center gap-1.5">
                           <button
                             type="button"
-                            className="inline-flex h-8 items-center gap-1 rounded-md bg-sidebar-primary/14 px-2.5 font-nav-cjk text-[12px] font-medium text-sidebar-primary transition-colors hover:bg-sidebar-primary/22"
+                            className="inline-flex h-8 items-center gap-1 rounded-md bg-sidebar-primary/14 px-2.5 font-nav-cjk text-[13px] font-medium text-sidebar-primary transition-colors hover:bg-sidebar-primary/22"
                             onClick={() => void handleApprove(application.code)}
                           >
                             <Check className="size-3.5" />
@@ -605,7 +635,7 @@ export function CommunityDetailPage() {
                           </button>
                           <button
                             type="button"
-                            className="inline-flex h-8 items-center gap-1 rounded-md px-2.5 font-nav-cjk text-[12px] font-medium text-destructive transition-colors hover:bg-destructive/10"
+                            className="inline-flex h-8 items-center gap-1 rounded-md px-2.5 font-nav-cjk text-[13px] font-medium text-destructive transition-colors hover:bg-destructive/10"
                             onClick={() => void handleReject(application.code)}
                           >
                             <X className="size-3.5" />

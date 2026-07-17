@@ -12,7 +12,7 @@ import { usePages } from '@/features/pages/page-context';
 import { recordPageVisit } from '@/features/pages/recent-visits';
 
 export function EditorPage() {
-  const { isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const {
     activePage,
     activePageId,
@@ -30,13 +30,13 @@ export function EditorPage() {
       return;
     }
 
-    recordPageVisit({
+    recordPageVisit(user?.id, {
       pageId: activePage.id,
       title: activePage.title,
       icon: activePage.icon,
       coverColor: activePage.coverColor,
     });
-  }, [activePage?.id]);
+  }, [activePage?.id, user?.id]);
 
   if (authLoading || isLoading || (activePageId && !activePage)) {
     return (

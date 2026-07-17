@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { AuthField } from '@/components/auth/AuthShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PAGE_COVER_COLORS } from '@/features/pages/cover-colors';
@@ -22,7 +21,7 @@ function SettingsSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
+    <section className="overflow-hidden rounded-2xl border border-border/70 bg-card">
       <div className="flex gap-1.5 px-6 pt-5">
         {DECOR_COLORS.map((color) => (
           <div
@@ -65,15 +64,13 @@ function PasswordField({
 
   return (
     <div className="space-y-2">
-      <label htmlFor={id} className="font-nav-cjk text-sm font-medium text-foreground">
-        {label}
-      </label>
       <div className="relative">
         <Input
           id={id}
           type={show ? 'text' : 'password'}
           value={value}
-          placeholder={placeholder}
+          placeholder={placeholder ?? label}
+          aria-label={label}
           aria-invalid={Boolean(error)}
           onChange={(event) => onChange(event.target.value)}
           className="h-10 pr-10"
@@ -222,37 +219,36 @@ export function SettingsPage() {
             description="更新你的昵称，邮箱暂不可修改。"
           >
             <form className="space-y-5" onSubmit={handleNicknameSubmit}>
-              <AuthField
-                id="settings-nickname"
-                label="昵称"
-                value={nickname}
-                placeholder={isAuthenticated ? '你的昵称' : '登录后设置昵称'}
-                error={nicknameError}
-                onChange={(value) => {
-                  setNickname(value);
-                  setNicknameError('');
-                }}
-              />
-
               <div className="space-y-2">
-                <label
-                  htmlFor="settings-email"
-                  className="font-nav-cjk text-sm font-medium text-foreground"
-                >
-                  邮箱
-                </label>
                 <Input
-                  id="settings-email"
-                  type="email"
-                  value={user?.email ?? ''}
-                  placeholder={isAuthenticated ? undefined : '登录后显示邮箱'}
-                  readOnly
-                  disabled={!isAuthenticated}
-                  className={cn(
-                    'h-10 cursor-not-allowed bg-muted/50 text-muted-foreground'
-                  )}
+                  id="settings-nickname"
+                  value={nickname}
+                  placeholder={isAuthenticated ? '昵称' : '登录后设置昵称'}
+                  aria-label="昵称"
+                  aria-invalid={Boolean(nicknameError)}
+                  onChange={(event) => {
+                    setNickname(event.target.value);
+                    setNicknameError('');
+                  }}
+                  className="h-10"
                 />
+                {nicknameError ? (
+                  <p className="font-nav-cjk text-xs text-destructive">{nicknameError}</p>
+                ) : null}
               </div>
+
+              <Input
+                id="settings-email"
+                type="email"
+                value={user?.email ?? ''}
+                placeholder={isAuthenticated ? '邮箱' : '登录后显示邮箱'}
+                aria-label="邮箱"
+                readOnly
+                disabled={!isAuthenticated}
+                className={cn(
+                  'h-10 cursor-not-allowed bg-muted/50 text-muted-foreground'
+                )}
+              />
 
               <Button
                 type="submit"

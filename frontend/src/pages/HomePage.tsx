@@ -7,6 +7,7 @@ import { ColorEmoji } from '@/components/ui/color-emoji';
 import { CommunityAvatar } from '@/features/communities/CommunityAvatar';
 import { CommunityListItem } from '@/features/communities/CommunityListItem';
 import { formatCommunityVisibility } from '@/features/communities/presentation';
+import { useAuth } from '@/features/auth/auth-context';
 import { usePages } from '@/features/pages/page-context';
 import { getHomeCardColor } from '@/features/pages/cover-colors';
 import type { PageTreeNode } from '@/features/pages/types';
@@ -170,7 +171,8 @@ function OpenCommunityRow({ community }: { community: CommunitySummaryDto }) {
 }
 
 export function HomePage() {
-  const recentVisits = useRecentPageVisits();
+  const { user } = useAuth();
+  const recentVisits = useRecentPageVisits(user?.id);
   const { workspace, pageTree } = usePages();
   const [communityCount, setCommunityCount] = React.useState(0);
   const [openCommunities, setOpenCommunities] = React.useState<CommunitySummaryDto[]>(
