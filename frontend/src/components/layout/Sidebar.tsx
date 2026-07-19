@@ -668,7 +668,9 @@ export function Sidebar() {
         className={cn(
           'fixed inset-y-0 left-0 z-50 flex h-dvh shrink-0 overflow-hidden transition-[width,transform] duration-300 md:static md:z-auto md:translate-x-0',
           isCollapsedDesktop ? 'md:w-[52px]' : 'w-[min(300px,85vw)] md:w-[300px]',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          sidebarOpen
+            ? 'translate-x-0'
+            : '-translate-x-full max-md:pointer-events-none'
         )}
         style={{
           width: isMobile

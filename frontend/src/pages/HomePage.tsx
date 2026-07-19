@@ -63,13 +63,18 @@ function HomeSummary({
 
   if (publicPageCount > 0) {
     items.push(
-      <a
+      <button
         key="public"
-        href="#public-knowledge"
+        type="button"
+        onClick={() => {
+          document
+            .getElementById('public-knowledge')
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }}
         className="transition-colors hover:text-foreground"
       >
         {publicPageCount} 篇公开
-      </a>
+      </button>
     );
   }
 
@@ -101,10 +106,10 @@ function PublicPageRow({ page }: { page: PageTreeNode }) {
   return (
     <CommunityListItem>
       <div className="flex items-center gap-3 px-3 py-2.5">
-        <Link
-          to={`/page/${page.id}`}
-          className="group flex min-w-0 flex-1 items-center gap-3"
-        >
+      <Link
+        to={`/page/${page.id}`}
+        className="group flex min-w-0 flex-1 touch-manipulation items-center gap-3"
+      >
           <div
             className="flex size-9 shrink-0 items-center justify-center rounded-lg"
             style={{
@@ -148,7 +153,7 @@ function OpenCommunityRow({ community }: { community: CommunitySummaryDto }) {
     <CommunityListItem>
       <Link
         to={`/communities/${community.code}`}
-        className="group flex items-center gap-3 px-3 py-2.5"
+        className="group flex touch-manipulation items-center gap-3 px-3 py-2.5"
       >
         <CommunityAvatar
           name={community.name}
@@ -261,7 +266,7 @@ export function HomePage() {
                   <Link
                     key={visit.pageId}
                     to={`/page/${visit.pageId}`}
-                    className="group flex min-h-[108px] flex-col rounded-xl p-4 transition-transform hover:scale-[1.02] hover:shadow-sm"
+                    className="group flex min-h-[108px] touch-manipulation flex-col rounded-xl p-4 md:transition-transform md:hover:scale-[1.02] md:hover:shadow-sm"
                     style={{
                       backgroundColor:
                         visit.coverColor ?? getHomeCardColor(index),

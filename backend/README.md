@@ -59,7 +59,8 @@ backend/
 │   ├── test.yaml           # APP_ENV=test
 │   └── prod.yaml           # APP_ENV=prod
 ├── sql/
-│   └── schema.sql          # 数据库初始化脚本
+│   ├── schema.sql          # 完整建库脚本（新库）
+│   └── migrations/         # 已有库增量升级（按需执行）
 ├── app/
 │   ├── main.py             # 应用入口 + run_server()
 │   ├── __main__.py         # python -m app
@@ -218,10 +219,10 @@ docker compose --profile with-db up -d --build
 
 首次启动会自动执行 `sql/schema.sql` 初始化数据库。
 
-已有数据库若需支持封面图片 URL，执行一次：
+已有数据库按需执行 `sql/migrations/` 下对应脚本（001–005，已存在的列/表会报错可跳过）：
 
 ```bash
-mysql -u root -p wiki < backend/sql/patches/20260715_widen_cover_color.sql
+mysql -u root -p wiki < backend/sql/migrations/005_widen_cover_color.sql
 ```
 
 ### 方式三：反向代理（生产推荐）

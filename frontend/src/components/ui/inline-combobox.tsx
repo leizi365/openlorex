@@ -303,7 +303,7 @@ const InlineComboboxContent: typeof ComboboxPopover = ({
     <Portal>
       <ComboboxPopover
         className={cn(
-          'font-nav z-500 max-h-[288px] w-[300px] overflow-y-auto rounded-md bg-popover text-sm shadow-md',
+          'font-nav z-[100] max-h-[min(288px,50dvh)] w-[min(300px,calc(100vw-2rem))] overflow-y-auto rounded-md border bg-popover text-sm shadow-md',
           className
         )}
         onKeyDownCapture={handleKeyDown}
@@ -364,7 +364,15 @@ const InlineComboboxItem = ({
   return (
     <ComboboxItem
       focusOnHover
-      className={cn(comboboxItemVariants(), className)}
+      className={cn(
+        comboboxItemVariants(),
+        'min-h-[44px] touch-manipulation md:min-h-0 md:h-[28px]',
+        className
+      )}
+      onMouseDown={(event) => {
+        // 防止 blur 先于 click（移动端触摸、滚动条点击）
+        event.preventDefault();
+      }}
       onClick={(event) => {
         removeInput(focusEditor);
         onClick?.(event);

@@ -1,5 +1,15 @@
--- Wiki MySQL schema
--- 约定：id(BIGINT) 内部使用；code(VARCHAR) 对外暴露；deleted 软删除
+-- Wiki MySQL 完整建库脚本（MySQL 8.x）
+-- 用途：新库初始化；docker compose --profile with-db 首次启动会自动执行
+--
+-- 约定：
+--   - id (BIGINT)：内部主键，不对外暴露
+--   - code (VARCHAR)：对外业务编码
+--   - deleted (TINYINT)：软删除，0=否 1=是
+--
+-- 用法：
+--   mysql -u root -p < backend/sql/schema.sql
+--   或
+--   mysql -u root -p wiki < backend/sql/schema.sql   # 若库已存在可省略 CREATE DATABASE
 
 CREATE DATABASE IF NOT EXISTS wiki
   DEFAULT CHARACTER SET utf8mb4
@@ -7,6 +17,9 @@ CREATE DATABASE IF NOT EXISTS wiki
 
 USE wiki;
 
+-- ---------------------------------------------------------------------------
+-- users
+-- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS users (
   id            BIGINT       NOT NULL AUTO_INCREMENT COMMENT '内部主键',
   code          VARCHAR(32)  NOT NULL COMMENT '对外业务编码',
@@ -22,6 +35,9 @@ CREATE TABLE IF NOT EXISTS users (
   KEY idx_users_deleted (deleted)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ---------------------------------------------------------------------------
+-- pages（目录页 parent_id 非空；内页 container_page_id 非空，parent_id 必须为 NULL）
+-- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS pages (
   id                  BIGINT       NOT NULL AUTO_INCREMENT COMMENT '内部主键',
   code                VARCHAR(32)  NOT NULL COMMENT '对外业务编码',
@@ -30,7 +46,7 @@ CREATE TABLE IF NOT EXISTS pages (
   container_page_id   BIGINT       NULL COMMENT '内页宿主；目录页必须为 NULL',
   title               VARCHAR(255) NOT NULL DEFAULT '无标题',
   icon                VARCHAR(32)  NULL,
-  cover_color         VARCHAR(2048) NULL,
+  cover_color         VARCHAR(2048) NULL COMMENT '封面色或图片 URL',
   sort_order          INT          NOT NULL DEFAULT 0,
   content             JSON         NOT NULL,
   version             BIGINT       NOT NULL DEFAULT 1 COMMENT '乐观锁版本号，每次内容/元数据更新递增',
@@ -49,6 +65,9 @@ CREATE TABLE IF NOT EXISTS pages (
   CONSTRAINT fk_pages_container FOREIGN KEY (container_page_id) REFERENCES pages(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ---------------------------------------------------------------------------
+-- assets
+-- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS assets (
   id           BIGINT       NOT NULL AUTO_INCREMENT COMMENT '内部主键',
   code         VARCHAR(32)  NOT NULL COMMENT '对外业务编码',
@@ -69,6 +88,9 @@ CREATE TABLE IF NOT EXISTS assets (
   CONSTRAINT fk_assets_page FOREIGN KEY (page_id) REFERENCES pages(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ---------------------------------------------------------------------------
+-- communities
+-- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS communities (
   id           BIGINT       NOT NULL AUTO_INCREMENT COMMENT '内部主键',
   code         VARCHAR(32)  NOT NULL COMMENT '对外业务编码',
@@ -87,6 +109,9 @@ CREATE TABLE IF NOT EXISTS communities (
   CONSTRAINT fk_communities_owner FOREIGN KEY (owner_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ---------------------------------------------------------------------------
+-- community_members
+-- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS community_members (
   id            BIGINT      NOT NULL AUTO_INCREMENT,
   community_id  BIGINT      NOT NULL,
@@ -101,6 +126,9 @@ CREATE TABLE IF NOT EXISTS community_members (
   CONSTRAINT fk_cm_user FOREIGN KEY (user_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ---------------------------------------------------------------------------
+-- community_invitations
+-- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS community_invitations (
   id             BIGINT       NOT NULL AUTO_INCREMENT,
   code           VARCHAR(32)  NOT NULL COMMENT '对外业务编码',
@@ -121,6 +149,9 @@ CREATE TABLE IF NOT EXISTS community_invitations (
   CONSTRAINT fk_inv_inviter FOREIGN KEY (inviter_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ---------------------------------------------------------------------------
+-- community_join_applications
+-- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS community_join_applications (
   id             BIGINT       NOT NULL AUTO_INCREMENT,
   code           VARCHAR(32)  NOT NULL COMMENT '对外业务编码',
@@ -142,6 +173,9 @@ CREATE TABLE IF NOT EXISTS community_join_applications (
   CONSTRAINT fk_cja_reviewed_by FOREIGN KEY (reviewed_by) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ---------------------------------------------------------------------------
+-- page_permissions
+-- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS page_permissions (
   id            BIGINT      NOT NULL AUTO_INCREMENT,
   page_id       BIGINT      NOT NULL,
@@ -158,19 +192,3 @@ CREATE TABLE IF NOT EXISTS page_permissions (
   CONSTRAINT fk_pp_page FOREIGN KEY (page_id) REFERENCES pages(id),
   CONSTRAINT fk_pp_granted_by FOREIGN KEY (granted_by) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- 已有库升级（若 pages 表已存在且无 version 列）：
--- ALTER TABLE pages ADD COLUMN version BIGINT NOT NULL DEFAULT 1 COMMENT '乐观锁版本号' AFTER content;
--- 已有库升级（若 pages 表已存在且无 is_public 列）：
--- ALTER TABLE pages ADD COLUMN is_public TINYINT(1) NOT NULL DEFAULT 0 COMMENT '对外公开 0否 1是' AFTER version;
--- 已有库升级（内页归属）：
--- ALTER TABLE pages
---   ADD COLUMN container_page_id BIGINT NULL COMMENT '内页宿主；目录页必须为 NULL' AFTER parent_id,
---   ADD KEY idx_pages_container (container_page_id, deleted),
---   ADD KEY idx_pages_user_container_sort (user_id, container_page_id, sort_order),
---   ADD CONSTRAINT fk_pages_container FOREIGN KEY (container_page_id) REFERENCES pages(id);
--- 已有库升级（社区开放/私密）：
--- ALTER TABLE communities
---   ADD COLUMN is_public TINYINT(1) NOT NULL DEFAULT 0 COMMENT '开放社区 0私密 1开放' AFTER owner_id,
---   ADD KEY idx_communities_public (is_public, deleted);
--- 已有库升级（社区加入申请表）：见上方 community_join_applications 建表语句。
