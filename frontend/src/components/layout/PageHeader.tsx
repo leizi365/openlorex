@@ -17,6 +17,7 @@ import {
 import { PAGE_COVER_COLORS } from '@/features/pages/cover-colors';
 import type { PageAccess } from '@/features/pages/types';
 import { SharedPageAccessLabel } from '@/components/pages/SharedPageContextBar';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { uploadAsset } from '@/lib/api/assets';
 import { getFileSizeError } from '@/lib/upload-limits';
 import { cn } from '@/lib/utils';
@@ -56,13 +57,16 @@ export function PageHeader({
   onShareClick,
   pageAccess,
 }: PageHeaderProps) {
+  const isMobile = useIsMobile();
+  const canEditCover = !readOnly && !(coverMode === 'public' && isMobile);
   const [coverOpen, setCoverOpen] = React.useState(false);
   const [iconOpen, setIconOpen] = React.useState(false);
   const [headerHovered, setHeaderHovered] = React.useState(false);
   const [coverHovered, setCoverHovered] = React.useState(false);
 
   const showPageControls = !readOnly && (headerHovered || iconOpen || coverOpen);
-  const showCoverControls = !readOnly && (coverHovered || coverOpen);
+  const showCoverControls =
+    canEditCover && (isMobile || coverHovered || coverOpen);
   const hasCover = Boolean(coverColor);
 
   return (
@@ -83,13 +87,13 @@ export function PageHeader({
         onMouseEnter={() => setCoverHovered(true)}
         onMouseLeave={() => setCoverHovered(false)}
       >
-        {hasCover ? (
+        {hasCover && canEditCover ? (
           <div
             className={cn(
               'absolute top-3 right-3 z-20 flex gap-1 transition-opacity duration-150',
               showCoverControls
                 ? 'pointer-events-auto opacity-100'
-                : 'pointer-events-none opacity-0 max-md:pointer-events-auto max-md:opacity-100'
+                : 'pointer-events-none opacity-0'
             )}
           >
             <Popover open={coverOpen} onOpenChange={setCoverOpen}>
@@ -213,7 +217,7 @@ export function PageHeader({
                 </button>
               )}
 
-              {!hasCover ? (
+              {!hasCover && canEditCover ? (
                 <Popover open={coverOpen} onOpenChange={setCoverOpen}>
                   <PopoverTrigger asChild>
                     <button
