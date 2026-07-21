@@ -16,10 +16,9 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/app/api/ai/command/utils';
+import { DEFAULT_FONT_SIZE } from '@/lib/editor-font-size';
 
 import { ToolbarButton } from './toolbar';
-
-const DEFAULT_FONT_SIZE = '16';
 
 const FONT_SIZE_MAP = {
   h1: '36',

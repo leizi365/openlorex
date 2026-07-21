@@ -1,4 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <rect width="32" height="32" rx="8" fill="#2563eb"/>
-  <text x="16" y="22" text-anchor="middle" fill="white" font-size="18" font-family="system-ui,sans-serif" font-weight="700">W</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none" role="img" aria-label="Knowledge owl logo">
+  <rect width="128" height="128" rx="28" fill="#F7F7F5"/>
+  <circle cx="64" cy="70" r="42" fill="#5B6570"/>
+  <ellipse cx="64" cy="78" rx="22" ry="26" fill="#E8EAED"/>
+  <path d="M64 54 L58 64 L70 64 Z" fill="#F4B860"/>
+  <circle cx="50" cy="62" r="14" fill="#FAFBFC"/>
+  <circle cx="78" cy="62" r="14" fill="#FAFBFC"/>
+  <circle cx="50" cy="62" r="8" fill="#2F3437"/>
+  <circle cx="78" cy="62" r="8" fill="#2F3437"/>
+  <circle cx="52" cy="60" r="2.5" fill="#FAFBFC"/>
+  <circle cx="80" cy="60" r="2.5" fill="#FAFBFC"/>
+  <path d="M34 38 C40 24 48 18 64 18 C80 18 88 24 94 38 L88 42 C83 32 76 28 64 28 C52 28 45 32 40 42 Z" fill="#5B6570"/>
+  <path d="M28 46 C24 34 30 24 40 22 C46 30 42 40 34 44 Z" fill="#5B6570"/>
+  <path d="M100 46 C104 34 98 24 88 22 C82 30 86 40 94 44 Z" fill="#5B6570"/>
+  <path d="M48 96 C56 104 72 104 80 96 C74 100 54 100 48 96 Z" fill="#4A535C"/>
 </svg>

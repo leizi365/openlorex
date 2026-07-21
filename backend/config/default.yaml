@@ -9,10 +9,10 @@ server:
   port: 8001
 
 database:
-  host: 127.0.0.1
+  host: 00
   port: 3306
-  user: root
-  password: 000000
+  user: roots
+  password: 00
   name: wiki
   pool_size: 10
   max_overflow: 20

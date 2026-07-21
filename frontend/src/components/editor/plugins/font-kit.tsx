@@ -11,6 +11,7 @@ import {
 import { KEYS } from 'platejs';
 
 import { PAGE_REF_KEY } from '@/features/pages/page-ref';
+import { DEFAULT_FONT_SIZE_PX } from '@/lib/editor-font-size';
 
 const options = {
   inject: {
@@ -42,6 +43,22 @@ export const FontKit = [
     },
   }),
   FontBackgroundColorPlugin.configure(options),
-  FontSizePlugin.configure(options),
+  FontSizePlugin.configure({
+    inject: {
+      ...options.inject,
+      nodeProps: {
+        defaultNodeValue: DEFAULT_FONT_SIZE_PX,
+      },
+    },
+    parsers: {
+      html: {
+        deserializer: {
+          isLeaf: true,
+          rules: [{ validStyle: { fontSize: '*' } }],
+          query: () => false,
+        },
+      },
+    },
+  }),
   FontFamilyPlugin.configure(options),
 ];

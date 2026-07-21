@@ -16,8 +16,6 @@ import { ColumnKit } from '@/components/editor/plugins/column-kit';
 import { CommentKit } from '@/components/editor/plugins/comment-kit';
 import { CursorOverlayKit } from '@/components/editor/plugins/cursor-overlay-kit';
 import { DateKit } from '@/components/editor/plugins/date-kit';
-import { DiscussionKit } from '@/components/editor/plugins/discussion-kit';
-import { DndKit } from '@/components/editor/plugins/dnd-kit';
 import { DocxKit } from '@/components/editor/plugins/docx-kit';
 import { EmojiKit } from '@/components/editor/plugins/emoji-kit';
 import { ExitBreakKit } from '@/components/editor/plugins/exit-break-kit';
@@ -31,6 +29,7 @@ import { MathKit } from '@/components/editor/plugins/math-kit';
 import { MediaKit } from '@/components/editor/plugins/media-kit';
 import { MentionKit } from '@/components/editor/plugins/mention-kit';
 import { PageRefKit } from '@/components/editor/plugins/page-ref-kit';
+import { PasteKit } from '@/components/editor/plugins/paste-kit';
 import { SlashKit } from '@/components/editor/plugins/slash-kit';
 import { SuggestionKit } from '@/components/editor/plugins/suggestion-kit';
 import { TableKit } from '@/components/editor/plugins/table-kit';
@@ -64,7 +63,6 @@ export const EditorKit = [
   ...LineHeightKit,
 
   // Collaboration
-  ...DiscussionKit,
   ...CommentKit,
   ...SuggestionKit,
 
@@ -73,13 +71,13 @@ export const EditorKit = [
   ...AutoformatKit,
   ...CursorOverlayKit,
   ...BlockMenuKit,
-  ...DndKit,
   ...EmojiKit,
   ...ExitBreakKit,
   TrailingBlockPlugin,
 
   // Parsers
   ...DocxKit,
+  ...PasteKit,
   ...MarkdownKit,
 
   // UI

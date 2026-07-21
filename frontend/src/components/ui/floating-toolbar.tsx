@@ -20,6 +20,7 @@ import {
 } from 'platejs/react';
 
 import { cn } from '@/app/api/ai/command/utils';
+import { useTableSelectionState } from '@/lib/use-table-selection-state';
 
 import { Toolbar } from './toolbar';
 
@@ -34,11 +35,12 @@ export function FloatingToolbar({
   const editorId = useEditorId();
   const focusedEditorId = useEventEditorValue('focus');
   const isFloatingLinkOpen = !!usePluginOption({ key: KEYS.link }, 'mode');
+  const { shouldHideTextFloatingToolbar } = useTableSelectionState();
 
   const floatingToolbarState = useFloatingToolbarState({
     editorId,
     focusedEditorId,
-    hideToolbar: isFloatingLinkOpen,
+    hideToolbar: isFloatingLinkOpen || shouldHideTextFloatingToolbar,
     ...state,
     floatingOptions: {
       middleware: [

@@ -71,6 +71,7 @@ import {
 import { useElementSelector } from 'platejs/react';
 
 import { Button } from '@/components/ui/button';
+import { useTableSelectionState } from '@/lib/use-table-selection-state';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -761,6 +762,7 @@ function TableFloatingToolbar({
   children,
   ...props
 }: React.ComponentProps<typeof PopoverContent>) {
+  const { shouldShowSingleCellTableToolbar } = useTableSelectionState();
   const selectedCellCount = useEditorSelector(
     (editor) =>
       editor.getApi(TablePlugin).table.getSelectedCellIds()?.length ?? 0,
@@ -770,14 +772,10 @@ function TableFloatingToolbar({
   const isFocusedLast = useFocusedLast();
   const [isExpandedSelectionToolbarReady, setIsExpandedSelectionToolbarReady] =
     React.useState(false);
-  // `getSelectedCellIds` only reports cells once a range spans more than one
-  // cell, so a count of zero means the selection (a caret or an expanded
-  // range) is confined to a single cell. Gating on it instead of
-  // `editor.api.isCollapsed()` keeps the row/column controls available while a
-  // cell's content is fully selected (e.g. select-all inside a cell), not just
-  // while the caret is collapsed in it.
-  const isSingleCellToolbarOpen =
-    isFocusedLast && selected && selectedCellCount === 0;
+  const isSingleCellToolbarOpen = shouldShowSingleCellTableToolbar(
+    isFocusedLast,
+    selected
+  );
   const isExpandedSelectionPending = isFocusedLast && selectedCellCount > 1;
 
   React.useEffect(() => {
