@@ -33,6 +33,46 @@ export function TableElementStatic({
   );
 }
 
+/** Uniform light gray for any cell that had a fill color in the editor. */
+const DOCX_TABLE_FILL = '#E8E8E8';
+/**
+ * Table grid border for html-to-docx.
+ * Use `pt` + named color so the parser gets a clean `single` stroke
+ * (hex/rgb with spaces can break; HTML border=1 maps to an ultra-thin sz=1).
+ */
+const DOCX_TABLE_BORDER = '1pt solid black';
+
+/**
+ * DOCX table wrapper.
+ * Borders must live ONLY on <table> with border-collapse.
+ * Cell borders + table insideH/insideV stack into hollow double lines in Word.
+ */
+export function TableElementDocx({
+  children,
+  ...props
+}: SlateElementProps<TTableElement>) {
+  const { disableMarginLeft } = props.editor.getOptions(BaseTablePlugin);
+  const marginLeft = disableMarginLeft ? 0 : props.element.marginLeft;
+
+  return (
+    <SlateElement {...props} style={{ paddingLeft: marginLeft }}>
+      <table
+        cellPadding={0}
+        cellSpacing={0}
+        style={{
+          border: DOCX_TABLE_BORDER,
+          borderCollapse: 'collapse',
+          borderSpacing: 0,
+          margin: '8pt 0',
+          width: 'auto',
+        }}
+      >
+        <tbody>{children}</tbody>
+      </table>
+    </SlateElement>
+  );
+}
+
 export function TableRowElementStatic(props: SlateElementProps) {
   return (
     <SlateElement {...props} as="tr" className="h-full">
@@ -127,4 +167,79 @@ export function TableCellHeaderElementStatic(
   props: SlateElementProps<TTableCellElement>
 ) {
   return <TableCellElementStatic {...props} isHeader />;
+}
+
+/**
+ * DOCX-compatible table cells.
+ * - Any cell fill → uniform light gray
+ * - No per-cell borders (table grid handles lines; avoids hollow double borders)
+ */
+export function TableCellElementDocx({
+  isHeader,
+  ...props
+}: SlateElementProps<TTableCellElement> & {
+  isHeader?: boolean;
+}) {
+  const { editor, element } = props;
+  const { api } = editor.getPlugin(BaseTablePlugin);
+
+  const { minHeight, width } = api.table.getCellSize({ element });
+  const alignElement = element as TTableCellElement & {
+    align?: 'left' | 'center' | 'right';
+    verticalAlign?: 'top' | 'middle' | 'bottom';
+  };
+  const horizontalAlign =
+    alignElement.align === 'center' ||
+    alignElement.align === 'right' ||
+    alignElement.align === 'left'
+      ? alignElement.align
+      : 'left';
+  const verticalAlign =
+    alignElement.verticalAlign === 'middle' ||
+    alignElement.verticalAlign === 'bottom' ||
+    alignElement.verticalAlign === 'top'
+      ? alignElement.verticalAlign
+      : 'top';
+
+  const hasFill = Boolean(element.background);
+  const backgroundColor = hasFill ? DOCX_TABLE_FILL : 'transparent';
+
+  return (
+    <SlateElement
+      {...props}
+      as={isHeader ? 'th' : 'td'}
+      style={{
+        background: backgroundColor,
+        backgroundColor,
+        // Must be 0 — any cell border stacks with table insideH/V and looks hollow.
+        border: '0',
+        borderBottom: '0',
+        borderLeft: '0',
+        borderRight: '0',
+        borderTop: '0',
+        color: '#37352f',
+        padding: '4pt 7pt',
+        textAlign: horizontalAlign,
+        verticalAlign,
+        width: width || 120,
+      }}
+      attributes={{
+        ...Object.fromEntries(
+          Object.entries(props.attributes ?? {}).filter(
+            ([key]) => key !== 'colspan' && key !== 'rowspan'
+          )
+        ),
+        colSpan: api.table.getColSpan(element),
+        rowSpan: api.table.getRowSpan(element),
+      }}
+    >
+      <div style={{ minHeight }}>{props.children}</div>
+    </SlateElement>
+  );
+}
+
+export function TableCellHeaderElementDocx(
+  props: SlateElementProps<TTableCellElement>
+) {
+  return <TableCellElementDocx {...props} isHeader />;
 }

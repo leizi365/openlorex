@@ -107,10 +107,10 @@ export function CodeBlockElementDocx(
     <SlateElement {...props}>
       <div
         style={{
-          backgroundColor: '#f5f5f5',
-          border: '1px solid #e0e0e0',
-          margin: '8pt 0',
-          padding: '12pt',
+          backgroundColor: '#f7f6f3',
+          border: '1px solid rgba(55, 53, 47, 0.09)',
+          margin: '6pt 0 8pt 0',
+          padding: '10pt 12pt',
         }}
       >
         {props.children}
@@ -125,8 +125,10 @@ export function CodeLineElementDocx(props: SlateElementProps) {
       {...props}
       as="p"
       style={{
-        fontFamily: "'Courier New', Consolas, monospace",
-        fontSize: '10pt',
+        color: 'rgba(55, 53, 47, 0.9)',
+        fontFamily: "Consolas, 'Courier New', monospace",
+        fontSize: '9.5pt',
+        lineHeight: 1.7,
         margin: 0,
         padding: 0,
       }}
@@ -208,8 +210,8 @@ export function CodeSyntaxLeafDocx(props: SlateLeafProps) {
       data-slate-leaf="true"
       style={{
         color,
-        fontFamily: "'Courier New', Consolas, monospace",
-        fontSize: '10pt',
+        fontFamily: "Consolas, 'Courier New', monospace",
+        fontSize: '9.5pt',
         fontStyle,
         fontWeight,
       }}

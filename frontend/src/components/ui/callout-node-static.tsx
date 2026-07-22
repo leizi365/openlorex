@@ -47,7 +47,7 @@ export function CalloutElementStatic({
  */
 export function CalloutElementDocx({ children, ...props }: SlateElementProps) {
   const backgroundColor =
-    (props.element.backgroundColor as string) || '#f4f4f5';
+    (props.element.backgroundColor as string) || '#f7f7f5';
   const icon = (props.element.icon as string) || '💡';
 
   return (
@@ -58,9 +58,8 @@ export function CalloutElementDocx({ children, ...props }: SlateElementProps) {
           borderCollapse: 'collapse',
           border: 'none',
           backgroundColor,
-          borderRadius: '4px',
           marginTop: '4pt',
-          marginBottom: '4pt',
+          marginBottom: '8pt',
         }}
       >
         <tbody>
@@ -69,9 +68,10 @@ export function CalloutElementDocx({ children, ...props }: SlateElementProps) {
               style={{
                 width: '30px',
                 verticalAlign: 'top',
-                padding: '8px 4px 8px 8px',
+                padding: '10px 4px 10px 10px',
                 border: 'none',
                 fontSize: '18px',
+                color: '#37352f',
               }}
             >
               <span data-plate-prevent-deserialization>{icon}</span>
@@ -79,8 +79,9 @@ export function CalloutElementDocx({ children, ...props }: SlateElementProps) {
             <td
               style={{
                 verticalAlign: 'top',
-                padding: '8px 8px 8px 4px',
+                padding: '10px 12px 10px 4px',
                 border: 'none',
+                color: '#37352f',
               }}
             >
               {children}

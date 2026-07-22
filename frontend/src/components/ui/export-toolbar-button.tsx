@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { BaseEditorKit } from '@/components/editor/editor-base-kit';
+import { DOCX_EXPORT_OPTIONS } from '@/lib/export-docx';
 
 import { EditorStatic } from './editor-static';
 import { ToolbarButton } from './toolbar';
@@ -155,6 +156,7 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
     ]);
 
     const blob = await exportToDocx(editor.children, {
+      ...DOCX_EXPORT_OPTIONS,
       editorPlugins: [...BaseEditorKit, ...DocxExportKit] as SlatePlugin[],
     });
 

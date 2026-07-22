@@ -12,6 +12,11 @@ import {
   EquationElementDocx,
   InlineEquationElementDocx,
 } from '@/components/ui/equation-node-static';
+import {
+  TableCellElementDocx,
+  TableCellHeaderElementDocx,
+  TableElementDocx,
+} from '@/components/ui/table-node-static';
 import { TocElementDocx } from '@/components/ui/toc-node-static';
 import { DocxExportPlugin } from '@platejs/docx-io';
 import { KEYS } from 'platejs';
@@ -26,8 +31,7 @@ import { KEYS } from 'platejs';
  * - Equations (inline font instead of KaTeX)
  * - Callouts (table layout for icon placement)
  * - TOC (anchor links with paragraph breaks)
- *
- * Tables use base version with juice CSS inlining.
+ * - Tables (light-gray fills, single solid grid via table borders)
  */
 export const DocxExportKit = [
   DocxExportPlugin.configure({
@@ -42,6 +46,9 @@ export const DocxExportKit = [
         [KEYS.inlineEquation]: InlineEquationElementDocx,
         [KEYS.callout]: CalloutElementDocx,
         [KEYS.toc]: TocElementDocx,
+        [KEYS.table]: TableElementDocx,
+        [KEYS.td]: TableCellElementDocx,
+        [KEYS.th]: TableCellHeaderElementDocx,
       },
     },
   }),
