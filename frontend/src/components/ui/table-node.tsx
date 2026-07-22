@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 
-import { useDraggable, useDropLine } from '@platejs/dnd';
 import {
   BlockSelectionPlugin,
   useBlockSelected,
@@ -14,6 +13,7 @@ import {
   setTableColSize,
   setTableMarginLeft,
   setTableRowSize,
+  getCellTypes,
 } from '@platejs/table';
 import {
   TablePlugin,
@@ -32,6 +32,12 @@ import {
   useTableValue,
 } from '@platejs/table/react';
 import {
+  AlignCenterIcon,
+  AlignLeftIcon,
+  AlignRightIcon,
+  AlignVerticalJustifyCenterIcon,
+  AlignVerticalJustifyEndIcon,
+  AlignVerticalJustifyStartIcon,
   ArrowDown,
   ArrowLeft,
   ArrowRight,
@@ -39,14 +45,12 @@ import {
   CombineIcon,
   EraserIcon,
   Grid2X2Icon,
-  GripVertical,
   PaintBucketIcon,
   SquareSplitHorizontalIcon,
   Trash2Icon,
   XIcon,
 } from 'lucide-react';
 import {
-  type TElement,
   type TTableCellElement,
   type TTableElement,
   type TTableRowElement,
@@ -56,7 +60,6 @@ import {
 import {
   type PlateElementProps,
   PlateElement,
-  useComposedRef,
   useEditorPlugin,
   useEditorRef,
   useEditorSelector,
@@ -70,7 +73,6 @@ import {
 } from 'platejs/react';
 import { useElementSelector } from 'platejs/react';
 
-import { Button } from '@/components/ui/button';
 import { useTableSelectionState } from '@/lib/use-table-selection-state';
 import {
   DropdownMenu,
@@ -139,10 +141,94 @@ type TableResizeContextValue = {
   ) => void;
 };
 
-const TABLE_CONTROL_COLUMN_WIDTH = 8;
+
 const TABLE_DEFAULT_COLUMN_WIDTH = 120;
 const TABLE_DEFERRED_COLUMN_RESIZE_CELL_COUNT = 1200;
 const TABLE_MULTI_SELECTION_TOOLBAR_DELAY_MS = 150;
+
+type TableCellHorizontalAlign = 'left' | 'center' | 'right';
+type TableCellVerticalAlign = 'top' | 'middle' | 'bottom';
+
+type TableCellAlignElement = TTableCellElement & {
+  align?: TableCellHorizontalAlign;
+  verticalAlign?: TableCellVerticalAlign;
+};
+
+function getTableCellHorizontalAlign(
+  element: TableCellAlignElement
+): TableCellHorizontalAlign {
+  if (
+    element.align === 'center' ||
+    element.align === 'right' ||
+    element.align === 'left'
+  ) {
+    return element.align;
+  }
+
+  return 'left';
+}
+
+function getTableCellVerticalAlign(
+  element: TableCellAlignElement
+): TableCellVerticalAlign {
+  if (
+    element.verticalAlign === 'middle' ||
+    element.verticalAlign === 'bottom' ||
+    element.verticalAlign === 'top'
+  ) {
+    return element.verticalAlign;
+  }
+
+  return 'top';
+}
+
+function setCellAlignment(
+  editor: ReturnType<typeof useEditorRef>,
+  options: {
+    align?: TableCellHorizontalAlign;
+    selectedCells?: TTableCellElement[];
+    verticalAlign?: TableCellVerticalAlign;
+  }
+) {
+  const { align, selectedCells, verticalAlign } = options;
+  const patch: Partial<TableCellAlignElement> = {};
+
+  if (align !== undefined) patch.align = align;
+  if (verticalAlign !== undefined) patch.verticalAlign = verticalAlign;
+  if (Object.keys(patch).length === 0) return;
+
+  if (selectedCells && selectedCells.length > 0) {
+    selectedCells.forEach((cell) => {
+      const cellPath = editor.api.findPath(cell);
+      if (cellPath) editor.tf.setNodes(patch, { at: cellPath });
+    });
+    return;
+  }
+
+  const currentCell = editor.api.node({
+    match: { type: getCellTypes(editor) },
+  })?.[0] as TTableCellElement | undefined;
+
+  if (currentCell) {
+    const cellPath = editor.api.findPath(currentCell);
+    if (cellPath) editor.tf.setNodes(patch, { at: cellPath });
+  }
+}
+
+function getTableCellContentAlignStyle(element: TableCellAlignElement) {
+  const horizontalAlign = getTableCellHorizontalAlign(element);
+  const verticalAlign = getTableCellVerticalAlign(element);
+
+  return {
+    justifyContent:
+      verticalAlign === 'middle'
+        ? 'center'
+        : verticalAlign === 'bottom'
+          ? 'flex-end'
+          : 'flex-start',
+    textAlign: horizontalAlign,
+  } as React.CSSProperties;
+}
 
 const TableResizeContext = React.createContext<TableResizeContextValue | null>(
   null
@@ -609,18 +695,15 @@ export const TableElement = withHOC(
     ...props
   }: PlateElementProps<TTableElement>) {
     const readOnly = useReadOnly();
-    const isSelectionAreaVisible = usePluginOption(
-      BlockSelectionPlugin,
-      'isSelectionAreaVisible'
-    );
-    const hasControls = !readOnly && !isSelectionAreaVisible;
+    const editor = useEditorRef();
     const { marginLeft, props: tableProps } = useTableElement();
     const colSizes = useTableColSizes();
-    const controlColumnWidth = hasControls ? TABLE_CONTROL_COLUMN_WIDTH : 0;
+    const controlColumnWidth = 0;
     const dragIndicatorRef = React.useRef<HTMLDivElement>(null);
     const hoverIndicatorRef = React.useRef<HTMLDivElement>(null);
+    const columnCount = getTableColumnCount(props.element);
     const deferColumnResize =
-      colSizes.length * props.element.children.length >
+      columnCount * props.element.children.length >
       TABLE_DEFERRED_COLUMN_RESIZE_CELL_COUNT;
     const tablePath = useElementSelector(([, path]) => path, [], {
       key: KEYS.table,
@@ -639,15 +722,55 @@ export const TableElement = withHOC(
       wrapperRef,
     });
     const resolvedColSizes = React.useMemo(() => {
-      if (colSizes.length > 0) {
-        return colSizes.map((colSize) => colSize || TABLE_DEFAULT_COLUMN_WIDTH);
-      }
-
-      return Array.from(
-        { length: getTableColumnCount(props.element) },
+      const fallback = Array.from(
+        { length: columnCount },
         () => TABLE_DEFAULT_COLUMN_WIDTH
       );
-    }, [colSizes, props.element]);
+
+      if (columnCount <= 0) {
+        return [];
+      }
+
+      if (colSizes.length === 0) {
+        return fallback;
+      }
+
+      const normalized = colSizes.map(
+        (colSize) => colSize || TABLE_DEFAULT_COLUMN_WIDTH
+      );
+
+      if (normalized.length === columnCount) {
+        return normalized;
+      }
+
+      if (normalized.length > columnCount) {
+        return normalized.slice(0, columnCount);
+      }
+
+      return [
+        ...normalized,
+        ...fallback.slice(normalized.length),
+      ];
+    }, [colSizes, columnCount]);
+
+    React.useEffect(() => {
+      if (readOnly) return;
+
+      const storedColSizes = props.element.colSizes;
+      if (!storedColSizes || storedColSizes.length <= columnCount) return;
+      if (columnCount <= 0) return;
+
+      editor.tf.setNodes(
+        { colSizes: storedColSizes.slice(0, columnCount) },
+        { at: tablePath }
+      );
+    }, [
+      columnCount,
+      editor,
+      props.element.colSizes,
+      readOnly,
+      tablePath,
+    ]);
     const tableVariableStyle = React.useMemo(() => {
       if (resolvedColSizes.length === 0) {
         return;
@@ -679,15 +802,14 @@ export const TableElement = withHOC(
       <PlateElement
         {...props}
         className={cn(
-          'overflow-x-auto overflow-y-hidden py-0',
-          hasControls && '-ml-2 *:data-[slot=block-selection]:left-2'
+          'wiki-table-block min-w-0 max-w-full overflow-x-auto overflow-y-visible py-0'
         )}
         style={{ paddingLeft: marginLeft }}
       >
         <TableResizeContext.Provider value={resizeController}>
           <div
             ref={wrapperRef}
-            className="group/table relative w-fit"
+            className="group/table relative w-max"
             style={tableVariableStyle}
           >
             <div
@@ -703,7 +825,7 @@ export const TableElement = withHOC(
             <table
               ref={tableRef}
               className={cn(
-                'mr-0 ml-px table h-px table-fixed border-collapse',
+                'mr-0 ml-0 table h-px w-auto table-fixed border-collapse',
                 'data-[table-selecting=true]:[&_*::selection]:!bg-transparent',
                 'data-[table-selecting=true]:[&_*::selection]:!text-inherit',
                 'data-[table-selecting=true]:[&_*::-moz-selection]:!bg-transparent',
@@ -715,28 +837,17 @@ export const TableElement = withHOC(
             >
               {resolvedColSizes.length > 0 && (
                 <colgroup>
-                  {hasControls && (
-                    <col
-                      style={{
-                        maxWidth: TABLE_CONTROL_COLUMN_WIDTH,
-                        minWidth: TABLE_CONTROL_COLUMN_WIDTH,
-                        width: TABLE_CONTROL_COLUMN_WIDTH,
-                      }}
-                    />
-                  )}
                   {resolvedColSizes.map((colSize, index) => (
                     <col
                       key={index}
                       style={{
-                        maxWidth: colSize,
-                        minWidth: colSize,
                         width: colSize,
                       }}
                     />
                   ))}
                 </colgroup>
               )}
-              <tbody className="min-w-full">{children}</tbody>
+              <tbody>{children}</tbody>
             </table>
 
             {isSelectingTable && (
@@ -763,11 +874,26 @@ function TableFloatingToolbar({
   ...props
 }: React.ComponentProps<typeof PopoverContent>) {
   const { shouldShowSingleCellTableToolbar } = useTableSelectionState();
-  const selectedCellCount = useEditorSelector(
-    (editor) =>
-      editor.getApi(TablePlugin).table.getSelectedCellIds()?.length ?? 0,
-    []
-  );
+  const element = useElement<TTableElement>();
+  const selectedCellCountInTable = useEditorSelector((editor) => {
+    const selectedCells =
+      editor.getApi(TablePlugin).table.getSelectedCells() ?? [];
+
+    if (selectedCells.length === 0) return 0;
+
+    const tablePath = editor.api.findPath(element);
+    if (!tablePath) return 0;
+
+    let count = 0;
+    for (const cell of selectedCells) {
+      const cellPath = editor.api.findPath(cell);
+      if (cellPath && PathApi.isAncestor(tablePath, cellPath)) {
+        count += 1;
+      }
+    }
+
+    return count;
+  }, [element]);
   const selected = useSelected();
   const isFocusedLast = useFocusedLast();
   const [isExpandedSelectionToolbarReady, setIsExpandedSelectionToolbarReady] =
@@ -776,7 +902,8 @@ function TableFloatingToolbar({
     isFocusedLast,
     selected
   );
-  const isExpandedSelectionPending = isFocusedLast && selectedCellCount > 1;
+  const isExpandedSelectionPending =
+    isFocusedLast && selectedCellCountInTable > 1;
 
   React.useEffect(() => {
     if (!isExpandedSelectionPending) {
@@ -797,18 +924,24 @@ function TableFloatingToolbar({
 
   const shouldRenderExpandedSelectionToolbar =
     isExpandedSelectionToolbarReady && isExpandedSelectionPending;
+  // Never show single-cell and multi-cell toolbars together.
   const isToolbarOpen =
-    isSingleCellToolbarOpen || shouldRenderExpandedSelectionToolbar;
+    (isSingleCellToolbarOpen && !isExpandedSelectionPending) ||
+    shouldRenderExpandedSelectionToolbar;
 
   return (
     <Popover open={isToolbarOpen} modal={false}>
-      <PopoverAnchor>{children}</PopoverAnchor>
-      {isSingleCellToolbarOpen && (
-        <SingleCellTableFloatingToolbarContent {...props} />
-      )}
-      {shouldRenderExpandedSelectionToolbar && (
-        <ExpandedSelectionTableFloatingToolbarContent {...props} />
-      )}
+      <PopoverAnchor className="block max-w-full">{children}</PopoverAnchor>
+      {isToolbarOpen ? (
+        isSingleCellToolbarOpen && !isExpandedSelectionPending ? (
+          <SingleCellTableFloatingToolbarContent key="single" {...props} />
+        ) : shouldRenderExpandedSelectionToolbar ? (
+          <ExpandedSelectionTableFloatingToolbarContent
+            key="multi"
+            {...props}
+          />
+        ) : null
+      ) : null}
     </Popover>
   );
 }
@@ -819,14 +952,12 @@ function ExpandedSelectionTableFloatingToolbarContent(
   const { tf } = useEditorPlugin(TablePlugin);
   const { canMerge, canSplit } = useTableMergeState();
 
-  if (!canMerge && !canSplit) return null;
-
   return (
     <TableFloatingToolbarContent
       canMerge={canMerge}
       canSplit={canSplit}
-      onMerge={() => tf.table.merge()}
-      onSplit={() => tf.table.split()}
+      onMerge={canMerge ? () => tf.table.merge() : undefined}
+      onSplit={canSplit ? () => tf.table.split() : undefined}
       {...props}
     />
   );
@@ -926,6 +1057,9 @@ function TableFloatingToolbarContent({
               <TableBordersDropdownMenuContent />
             </DropdownMenuPortal>
           </DropdownMenu>
+
+          <TableCellHorizontalAlignMenu />
+          <TableCellVerticalAlignMenu />
 
           {canMerge && onMerge ? (
             <ToolbarButton
@@ -1143,13 +1277,116 @@ function ColorDropdownMenu({
   );
 }
 
+const horizontalAlignItems: {
+  icon: typeof AlignLeftIcon;
+  label: string;
+  value: TableCellHorizontalAlign;
+}[] = [
+  { icon: AlignLeftIcon, label: '左对齐', value: 'left' },
+  { icon: AlignCenterIcon, label: '水平居中', value: 'center' },
+  { icon: AlignRightIcon, label: '右对齐', value: 'right' },
+];
+
+const verticalAlignItems: {
+  icon: typeof AlignVerticalJustifyStartIcon;
+  label: string;
+  value: TableCellVerticalAlign;
+}[] = [
+  { icon: AlignVerticalJustifyStartIcon, label: '顶端对齐', value: 'top' },
+  {
+    icon: AlignVerticalJustifyCenterIcon,
+    label: '垂直居中',
+    value: 'middle',
+  },
+  { icon: AlignVerticalJustifyEndIcon, label: '底端对齐', value: 'bottom' },
+];
+
+function TableCellHorizontalAlignMenu() {
+  const [open, setOpen] = React.useState(false);
+  const editor = useEditorRef();
+  const element = useElement<TableCellAlignElement>();
+  const value = getTableCellHorizontalAlign(element);
+  const Icon =
+    horizontalAlignItems.find((item) => item.value === value)?.icon ??
+    AlignLeftIcon;
+
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
+      <DropdownMenuTrigger
+        render={
+          <ToolbarButton tooltip="水平对齐" isDropdown pressed={open} />
+        }
+      >
+        <Icon />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="min-w-0" align="start">
+        {horizontalAlignItems.map(({ icon: ItemIcon, label, value: itemValue }) => (
+          <DropdownMenuItem
+            key={itemValue}
+            className="gap-2"
+            onClick={() => {
+              setCellAlignment(editor, {
+                align: itemValue,
+                selectedCells:
+                  editor.getApi(TablePlugin).table.getSelectedCells() ?? [],
+              });
+              setOpen(false);
+            }}
+          >
+            <ItemIcon />
+            <span>{label}</span>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function TableCellVerticalAlignMenu() {
+  const [open, setOpen] = React.useState(false);
+  const editor = useEditorRef();
+  const element = useElement<TableCellAlignElement>();
+  const value = getTableCellVerticalAlign(element);
+  const Icon =
+    verticalAlignItems.find((item) => item.value === value)?.icon ??
+    AlignVerticalJustifyStartIcon;
+
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
+      <DropdownMenuTrigger
+        render={
+          <ToolbarButton tooltip="垂直对齐" isDropdown pressed={open} />
+        }
+      >
+        <Icon />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="min-w-0" align="start">
+        {verticalAlignItems.map(({ icon: ItemIcon, label, value: itemValue }) => (
+          <DropdownMenuItem
+            key={itemValue}
+            className="gap-2"
+            onClick={() => {
+              setCellAlignment(editor, {
+                selectedCells:
+                  editor.getApi(TablePlugin).table.getSelectedCells() ?? [],
+                verticalAlign: itemValue,
+              });
+              setOpen(false);
+            }}
+          >
+            <ItemIcon />
+            <span>{label}</span>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function TableRowElement({
   children,
   ...props
 }: PlateElementProps<TTableRowElement>) {
-  const { element } = props;
-  const readOnly = useReadOnly();
-  const editor = useEditorRef();
   const rowIndex = useElementSelector(([, path]) => path.at(-1) as number, [], {
     key: KEYS.tr,
   });
@@ -1162,35 +1399,12 @@ export function TableRowElement({
   );
   const rowSizeOverrides = useTableValue('rowSizeOverrides');
   const rowMinHeight = rowSizeOverrides.get?.(rowIndex) ?? rowSize;
-  const isSelectionAreaVisible = usePluginOption(
-    BlockSelectionPlugin,
-    'isSelectionAreaVisible'
-  );
-  const hasControls = !readOnly && !isSelectionAreaVisible;
-
-  const { isDragging, nodeRef, previewRef, handleRef } = useDraggable({
-    element,
-    type: element.type,
-    canDropNode: ({ dragEntry, dropEntry }) =>
-      PathApi.equals(
-        PathApi.parent(dragEntry[1]),
-        PathApi.parent(dropEntry[1])
-      ),
-    onDropHandler: (_, { dragItem }) => {
-      const dragElement = (dragItem as { element: TElement }).element;
-
-      if (dragElement) {
-        editor.tf.select(dragElement);
-      }
-    },
-  });
 
   return (
     <PlateElement
       {...props}
-      ref={useComposedRef(props.ref, previewRef, nodeRef)}
       as="tr"
-      className={cn('group/row', isDragging && 'opacity-50')}
+      className="group/row"
       style={
         {
           ...props.style,
@@ -1198,16 +1412,6 @@ export function TableRowElement({
         } as React.CSSProperties
       }
     >
-      {hasControls && (
-        <td
-          className="w-2 min-w-2 max-w-2 select-none p-0"
-          contentEditable={false}
-        >
-          <RowDragHandle dragRef={handleRef} />
-          <RowDropLine />
-        </td>
-      )}
-
       {children}
     </PlateElement>
   );
@@ -1239,43 +1443,6 @@ function useTableCellPresentation(element: TTableCellElement) {
   };
 }
 
-function RowDragHandle({ dragRef }: { dragRef: React.Ref<any> }) {
-  const editor = useEditorRef();
-  const element = useElement();
-
-  return (
-    <Button
-      ref={dragRef}
-      variant="outline"
-      className={cn(
-        '-translate-y-1/2 absolute top-1/2 left-0 z-51 h-6 w-4 p-0 focus-visible:ring-0 focus-visible:ring-offset-0',
-        'cursor-grab active:cursor-grabbing',
-        'opacity-0 transition-opacity duration-100 group-hover/row:opacity-100 group-data-[table-resizing=true]/row:opacity-0'
-      )}
-      onClick={() => {
-        editor.tf.select(element);
-      }}
-    >
-      <GripVertical className="text-muted-foreground" />
-    </Button>
-  );
-}
-
-function RowDropLine() {
-  const { dropLine } = useDropLine();
-
-  if (!dropLine) return null;
-
-  return (
-    <div
-      className={cn(
-        'absolute inset-x-0 left-2 z-50 h-0.5 bg-brand/50',
-        dropLine === 'top' ? '-top-px' : '-bottom-px'
-      )}
-    />
-  );
-}
-
 export function TableCellElement({
   isHeader,
   ...props
@@ -1300,15 +1467,22 @@ export function TableCellElement({
 
   const { borders, colIndex, colSpan, rowIndex, rowSpan, width } =
     useTableCellPresentation(element);
+  const alignElement = element as TableCellAlignElement;
+  const contentAlignStyle = getTableCellContentAlignStyle(alignElement);
+  const {
+    colspan: _colspan,
+    rowspan: _rowspan,
+    ...cellAttributes
+  } = (props.attributes ?? {}) as Record<string, unknown>;
 
   return (
     <PlateElement
       {...props}
       as={isHeader ? 'th' : 'td'}
       className={cn(
-        'relative h-full overflow-visible border-none bg-background p-0',
+        'relative h-full overflow-hidden border-none bg-background p-0',
         element.background ? 'bg-(--cellBackground)' : 'bg-background',
-        isHeader && 'text-left *:m-0',
+        isHeader && 'font-normal *:m-0',
         'before:size-full',
         'data-[table-cell-selected=true]:before:z-10',
         'data-[table-cell-selected=true]:before:bg-brand/5',
@@ -1321,23 +1495,26 @@ export function TableCellElement({
       style={
         {
           '--cellBackground': element.background,
-          maxWidth: width,
-          minWidth: width,
+          width,
+          verticalAlign: getTableCellVerticalAlign(alignElement),
         } as React.CSSProperties
       }
       attributes={{
-        ...props.attributes,
+        ...cellAttributes,
         colSpan,
         'data-table-cell-id': element.id,
         rowSpan,
       }}
     >
       <div
-        className="relative z-20 box-border h-full px-2.5 py-1"
+        className="relative z-20 box-border flex h-full flex-col px-2.5 py-0"
         style={
-          rowSpan === 1
-            ? { minHeight: 'var(--tableRowMinHeight, 0px)' }
-            : undefined
+          {
+            ...(rowSpan === 1
+              ? { minHeight: 'var(--tableRowMinHeight, 0px)' }
+              : undefined),
+            ...contentAlignStyle,
+          } as React.CSSProperties
         }
       >
         {props.children}
@@ -1385,7 +1562,7 @@ const TableCellResizeControls = React.memo(function TableCellResizeControls({
       suppressContentEditableWarning={true}
     >
       <div
-        className="-top-2 -right-1 pointer-events-auto absolute z-40 h-[calc(100%_+_8px)] w-2 cursor-col-resize touch-none"
+        className="pointer-events-auto absolute top-0 right-0 z-40 h-full w-1.5 cursor-col-resize touch-none"
         onPointerEnter={(event) => {
           setResizePreview(event, {
             colIndex,
@@ -1407,7 +1584,7 @@ const TableCellResizeControls = React.memo(function TableCellResizeControls({
         }}
       />
       <div
-        className="-bottom-1 pointer-events-auto absolute left-0 z-40 h-2 w-full cursor-row-resize touch-none"
+        className="pointer-events-auto absolute bottom-0 left-0 z-40 h-1.5 w-full cursor-row-resize touch-none"
         onPointerEnter={(event) => {
           setResizePreview(event, {
             colIndex,
@@ -1430,7 +1607,7 @@ const TableCellResizeControls = React.memo(function TableCellResizeControls({
       />
       {isLeftHandle && (
         <div
-          className="-left-1 pointer-events-auto absolute top-0 z-40 h-full w-2 cursor-col-resize touch-none"
+          className="pointer-events-auto absolute top-0 left-0 z-40 h-full w-1.5 cursor-col-resize touch-none"
           onPointerEnter={(event) => {
             setResizePreview(event, {
               colIndex,

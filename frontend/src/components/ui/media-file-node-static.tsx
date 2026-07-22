@@ -18,17 +18,25 @@ export function FileElementStatic(
   props: SlateElementProps<TFileElement & TResizableProps>
 ) {
   const element = props.element as TFileElementWithStyle & {
+    align?: string;
     suggestion?: TSuggestionData;
   };
-  const { name, url, width } = element;
+  const { align = 'left', name, url, width } = element;
   const suggestionData = element.suggestion;
   const isRemoveSuggestion = suggestionData?.type === 'remove';
+  const alignClass =
+    align === 'right' || align === 'end'
+      ? 'ml-auto'
+      : align === 'center'
+        ? 'mx-auto'
+        : 'mr-auto';
 
   return (
     <SlateElement className="my-px rounded-sm" {...props}>
       <a
         className={cn(
-          'group relative m-0 inline-flex items-center gap-2 rounded-md px-2 py-0.5 no-underline transition-opacity hover:opacity-95',
+          'group relative m-0 flex max-w-full items-center gap-2 rounded-md px-2 py-0.5 no-underline transition-opacity hover:opacity-95',
+          alignClass,
           isRemoveSuggestion && 'bg-red-100 text-red-700'
         )}
         contentEditable={false}

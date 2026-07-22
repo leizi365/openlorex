@@ -16,6 +16,7 @@ import { useEditorReadOnly } from 'platejs/react';
 
 import { FontColorToolbarButton } from './font-color-toolbar-button';
 import { FontSizeToolbarButton } from './font-size-toolbar-button';
+import { LineHeightToolbarButton } from './line-height-toolbar-button';
 import { LinkToolbarButton } from './link-toolbar-button';
 import { MarkToolbarButton } from './mark-toolbar-button';
 import { MoreToolbarButton } from './more-toolbar-button';
@@ -32,6 +33,7 @@ export function FloatingToolbarButtons() {
       <ToolbarGroup>
         <TurnIntoToolbarButton />
         <FontSizeToolbarButton />
+        <LineHeightToolbarButton />
       </ToolbarGroup>
 
       <ToolbarGroup>

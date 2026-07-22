@@ -7,10 +7,17 @@ import { SlateElement } from 'platejs/static';
 
 import { cn } from '@/app/api/ai/command/utils';
 
+function getMediaAlignClass(align?: string | null) {
+  if (align === 'left' || align === 'start') return 'mr-auto';
+  if (align === 'right' || align === 'end') return 'ml-auto';
+  return 'mx-auto';
+}
+
 export function AudioElementStatic(
   props: SlateElementProps<TAudioElement & TResizableProps>
 ) {
-  const { url, width, height } = props.element;
+  const { align = 'center', url, width, height } = props.element as TAudioElement &
+    TResizableProps & { align?: string };
   const heightStyle =
     height !== undefined && height !== null
       ? {
@@ -20,7 +27,13 @@ export function AudioElementStatic(
 
   return (
     <SlateElement {...props} className="mb-1">
-      <figure className="group relative cursor-default" style={{ width }}>
+      <figure
+        className={cn(
+          'group relative block max-w-full cursor-default',
+          getMediaAlignClass(align)
+        )}
+        style={{ width }}
+      >
         <div className={cn('h-16 rounded-sm')} style={heightStyle}>
           <audio className="size-full" src={url} controls />
         </div>

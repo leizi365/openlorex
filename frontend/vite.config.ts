@@ -47,15 +47,29 @@ export default defineConfig(({ mode }) => {
       ],
     },
     optimizeDeps: {
-      exclude: ['@platejs/docx-io'],
       include: [
         'mermaid',
+        // Pre-bundle so CJS deps (html-to-vdom, virtual-dom) get ESM default interop
+        '@platejs/docx-io',
+        'html-to-vdom',
+        'virtual-dom',
+        'virtual-dom/vnode/vnode',
+        'virtual-dom/vnode/vtext',
+        'virtual-dom/vnode/is-vnode',
+        'virtual-dom/vnode/is-vtext',
         '@radix-ui/react-dropdown-menu',
         '@radix-ui/react-toolbar',
         '@radix-ui/react-tooltip',
         '@radix-ui/react-popover',
         '@radix-ui/react-roving-focus',
       ],
+      needsInterop: ['html-to-vdom', 'virtual-dom'],
+    },
+    build: {
+      commonjsOptions: {
+        include: [/html-to-vdom/, /virtual-dom/, /node_modules/],
+        transformMixedEsModules: true,
+      },
     },
     server: {
       host: config.server.host,

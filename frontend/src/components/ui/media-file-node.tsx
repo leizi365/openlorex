@@ -54,7 +54,7 @@ export const FileElement = withHOC(
     const readOnly = useReadOnly();
     const selected = useSelected();
     const isFocusedLast = useFocusedLast();
-    const { name, unsafeUrl } = useMediaState();
+    const { align = 'left', name, unsafeUrl } = useMediaState();
     const element = useElement<TFileElementWithStyle>();
     const sizeStyle = useMediaSizeStyle(element);
     const url = unsafeUrl || element.url;
@@ -84,9 +84,9 @@ export const FileElement = withHOC(
         <PlateElement className="my-px rounded-sm" {...props}>
           <MediaResizeContainer selected={selected && isFocusedLast}>
           <Resizable
-            align="left"
+            align={align}
             options={{
-              align: 'left',
+              align,
               readOnly,
             }}
           >

@@ -23,12 +23,18 @@ export function HeadingElementStatic({
   ...props
 }: SlateElementProps & VariantProps<typeof headingVariants>) {
   const id = props.element.id as string | undefined;
+  const lineHeight = (props.element as { lineHeight?: number | string })
+    .lineHeight;
 
   return (
     <SlateElement
       as={variant!}
       className={headingVariants({ variant })}
       {...props}
+      style={{
+        ...props.style,
+        ...(lineHeight != null ? { lineHeight } : null),
+      }}
     >
       {/* Bookmark anchor for DOCX TOC internal links */}
       {id && <span id={id} />}

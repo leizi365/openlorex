@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Image, Link2, Share2, Smile, Upload, X } from 'lucide-react';
+import { FileDown, Image, Link2, Share2, Smile, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { ColorEmoji } from '@/components/ui/color-emoji';
@@ -42,6 +42,7 @@ type PageHeaderProps = {
   onIconChange: (icon?: string) => void;
   onCoverChange: (coverColor?: string) => void;
   onShareClick?: () => void;
+  onExportWordClick?: () => void | Promise<void>;
   pageAccess?: PageAccess | null;
 };
 
@@ -55,6 +56,7 @@ export function PageHeader({
   onIconChange,
   onCoverChange,
   onShareClick,
+  onExportWordClick,
   pageAccess,
 }: PageHeaderProps) {
   const isMobile = useIsMobile();
@@ -63,11 +65,28 @@ export function PageHeader({
   const [iconOpen, setIconOpen] = React.useState(false);
   const [headerHovered, setHeaderHovered] = React.useState(false);
   const [coverHovered, setCoverHovered] = React.useState(false);
+  const [exporting, setExporting] = React.useState(false);
 
   const showPageControls = !readOnly && (headerHovered || iconOpen || coverOpen);
   const showCoverControls =
     canEditCover && (isMobile || coverHovered || coverOpen);
   const hasCover = Boolean(coverColor);
+  const showAccessLabel =
+    !onShareClick && Boolean(pageAccess && pageAccess.level !== 'owner');
+  const hasHeaderActions = Boolean(
+    onExportWordClick || onShareClick || showAccessLabel
+  );
+
+  const handleExportWord = async () => {
+    if (!onExportWordClick || exporting) return;
+
+    setExporting(true);
+    try {
+      await onExportWordClick();
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <div
@@ -243,23 +262,36 @@ export function PageHeader({
             </div>
           ) : null}
 
-          {onShareClick ? (
-            <button
-              type="button"
-              className={cn(
-                'ml-auto inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md px-2 text-sm text-muted-foreground/80 transition-colors hover:bg-accent hover:text-foreground',
-                'hidden md:inline-flex'
-              )}
-              onClick={onShareClick}
-            >
-              <Share2 className="size-4 text-muted-foreground/70" />
-              分享
-            </button>
-          ) : pageAccess && pageAccess.level !== 'owner' ? (
-            <SharedPageAccessLabel
-              access={pageAccess}
-              className="ml-auto hidden max-w-[min(100%,420px)] justify-end md:inline-flex"
-            />
+          {hasHeaderActions ? (
+            <div className="ml-auto hidden max-w-[min(100%,520px)] shrink-0 items-center gap-0.5 md:flex">
+              {onExportWordClick ? (
+                <button
+                  type="button"
+                  disabled={exporting}
+                  className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-sm text-muted-foreground/80 transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
+                  onClick={() => void handleExportWord()}
+                >
+                  <FileDown className="size-4 text-muted-foreground/70" />
+                  {exporting ? '导出中…' : '导出 Word'}
+                </button>
+              ) : null}
+              {onShareClick ? (
+                <button
+                  type="button"
+                  className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-sm text-muted-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+                  onClick={onShareClick}
+                >
+                  <Share2 className="size-4 text-muted-foreground/70" />
+                  分享
+                </button>
+              ) : null}
+              {showAccessLabel && pageAccess ? (
+                <SharedPageAccessLabel
+                  access={pageAccess}
+                  className="justify-end"
+                />
+              ) : null}
+            </div>
           ) : null}
         </div>
 

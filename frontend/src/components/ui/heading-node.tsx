@@ -7,6 +7,8 @@ import type { PlateElementProps } from 'platejs/react';
 import { type VariantProps, cva } from 'class-variance-authority';
 import { PlateElement } from 'platejs/react';
 
+import { cn } from '@/app/api/ai/command/utils';
+
 const headingVariants = cva(
   'relative mb-1 text-[rgba(55,53,47,1)] data-[nav-target=true]:rounded-md data-[nav-target=true]:bg-(--color-highlight)',
   {
@@ -28,12 +30,18 @@ export function HeadingElement({
   ...props
 }: PlateElementProps & VariantProps<typeof headingVariants>) {
   const id = props.element.id as string | undefined;
+  const lineHeight = (props.element as { lineHeight?: number | string })
+    .lineHeight;
 
   return (
     <PlateElement
       as={variant!}
       {...props}
-      className={headingVariants({ variant })}
+      className={cn(headingVariants({ variant }), props.className)}
+      style={{
+        ...props.style,
+        ...(lineHeight != null ? { lineHeight } : null),
+      }}
       attributes={{
         ...props.attributes,
         ...(id ? { id } : null),

@@ -6,6 +6,14 @@ import type { SlateElementProps } from 'platejs/static';
 import { NodeApi } from 'platejs';
 import { SlateElement } from 'platejs/static';
 
+import { cn } from '@/app/api/ai/command/utils';
+
+function getMediaAlignClass(align?: string | null) {
+  if (align === 'left' || align === 'start') return 'mr-auto';
+  if (align === 'right' || align === 'end') return 'ml-auto';
+  return 'mx-auto';
+}
+
 export function VideoElementStatic(
   props: SlateElementProps<TVideoElement & TCaptionElement & TResizableProps>
 ) {
@@ -19,21 +27,22 @@ export function VideoElementStatic(
 
   return (
     <SlateElement className="py-2.5" {...props}>
-      <div style={{ textAlign: align }}>
-        <figure
-          className="group relative m-0 inline-block cursor-default"
-          style={{ width }}
-        >
-          <div style={heightStyle}>
-            <video
-              className="h-full w-full max-w-full rounded-sm object-cover px-0"
-              src={url}
-              controls
-            />
-          </div>
-          {caption && <figcaption>{NodeApi.string(caption[0])}</figcaption>}
-        </figure>
-      </div>
+      <figure
+        className={cn(
+          'group relative m-0 block max-w-full cursor-default',
+          getMediaAlignClass(align)
+        )}
+        style={{ width }}
+      >
+        <div style={heightStyle}>
+          <video
+            className="h-full w-full max-w-full rounded-sm object-cover px-0"
+            src={url}
+            controls
+          />
+        </div>
+        {caption && <figcaption>{NodeApi.string(caption[0])}</figcaption>}
+      </figure>
       {props.children}
     </SlateElement>
   );

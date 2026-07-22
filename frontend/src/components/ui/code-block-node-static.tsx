@@ -13,117 +13,16 @@ import {
   type CodeBlockTheme,
   getCodeBlockTheme,
 } from './code-block-themes';
+import { getCodeBlockLanguageLabel } from '@/lib/code-block-languages';
 
 type CodeBlockElementData = TCodeBlockElement & {
   theme?: CodeBlockTheme;
+  wrap?: boolean;
 };
 
 type CodeBlockElementStaticProps = SlateElementProps<CodeBlockElementData> & {
   showLanguageLabel?: boolean;
 };
-
-const codeBlockLanguages: { label: string; value: string }[] = [
-  { label: 'Auto', value: 'auto' },
-  { label: 'Plain Text', value: 'plaintext' },
-  { label: 'ABAP', value: 'abap' },
-  { label: 'Agda', value: 'agda' },
-  { label: 'Arduino', value: 'arduino' },
-  { label: 'ASCII Art', value: 'ascii' },
-  { label: 'Assembly', value: 'x86asm' },
-  { label: 'Bash', value: 'bash' },
-  { label: 'BASIC', value: 'basic' },
-  { label: 'BNF', value: 'bnf' },
-  { label: 'C', value: 'c' },
-  { label: 'C#', value: 'csharp' },
-  { label: 'C++', value: 'cpp' },
-  { label: 'Clojure', value: 'clojure' },
-  { label: 'CoffeeScript', value: 'coffeescript' },
-  { label: 'Coq', value: 'coq' },
-  { label: 'CSS', value: 'css' },
-  { label: 'Dart', value: 'dart' },
-  { label: 'Dhall', value: 'dhall' },
-  { label: 'Diff', value: 'diff' },
-  { label: 'Docker', value: 'dockerfile' },
-  { label: 'EBNF', value: 'ebnf' },
-  { label: 'Elixir', value: 'elixir' },
-  { label: 'Elm', value: 'elm' },
-  { label: 'Erlang', value: 'erlang' },
-  { label: 'F#', value: 'fsharp' },
-  { label: 'Flow', value: 'flow' },
-  { label: 'Fortran', value: 'fortran' },
-  { label: 'Gherkin', value: 'gherkin' },
-  { label: 'GLSL', value: 'glsl' },
-  { label: 'Go', value: 'go' },
-  { label: 'GraphQL', value: 'graphql' },
-  { label: 'Groovy', value: 'groovy' },
-  { label: 'Haskell', value: 'haskell' },
-  { label: 'HCL', value: 'hcl' },
-  { label: 'HTML', value: 'html' },
-  { label: 'Idris', value: 'idris' },
-  { label: 'Java', value: 'java' },
-  { label: 'JavaScript', value: 'javascript' },
-  { label: 'JSON', value: 'json' },
-  { label: 'Julia', value: 'julia' },
-  { label: 'Kotlin', value: 'kotlin' },
-  { label: 'LaTeX', value: 'latex' },
-  { label: 'Less', value: 'less' },
-  { label: 'Lisp', value: 'lisp' },
-  { label: 'LiveScript', value: 'livescript' },
-  { label: 'LLVM IR', value: 'llvm' },
-  { label: 'Lua', value: 'lua' },
-  { label: 'Makefile', value: 'makefile' },
-  { label: 'Markdown', value: 'markdown' },
-  { label: 'Markup', value: 'markup' },
-  { label: 'MATLAB', value: 'matlab' },
-  { label: 'Mathematica', value: 'mathematica' },
-  { label: 'Mermaid', value: 'mermaid' },
-  { label: 'Nix', value: 'nix' },
-  { label: 'Notion Formula', value: 'notion' },
-  { label: 'Objective-C', value: 'objectivec' },
-  { label: 'OCaml', value: 'ocaml' },
-  { label: 'Pascal', value: 'pascal' },
-  { label: 'Perl', value: 'perl' },
-  { label: 'PHP', value: 'php' },
-  { label: 'PowerShell', value: 'powershell' },
-  { label: 'Prolog', value: 'prolog' },
-  { label: 'Protocol Buffers', value: 'protobuf' },
-  { label: 'PureScript', value: 'purescript' },
-  { label: 'Python', value: 'python' },
-  { label: 'R', value: 'r' },
-  { label: 'Racket', value: 'racket' },
-  { label: 'Reason', value: 'reasonml' },
-  { label: 'Ruby', value: 'ruby' },
-  { label: 'Rust', value: 'rust' },
-  { label: 'Sass', value: 'scss' },
-  { label: 'Scala', value: 'scala' },
-  { label: 'Scheme', value: 'scheme' },
-  { label: 'SCSS', value: 'scss' },
-  { label: 'Shell', value: 'shell' },
-  { label: 'Smalltalk', value: 'smalltalk' },
-  { label: 'Solidity', value: 'solidity' },
-  { label: 'SQL', value: 'sql' },
-  { label: 'Swift', value: 'swift' },
-  { label: 'TOML', value: 'toml' },
-  { label: 'TypeScript', value: 'typescript' },
-  { label: 'VB.Net', value: 'vbnet' },
-  { label: 'Verilog', value: 'verilog' },
-  { label: 'VHDL', value: 'vhdl' },
-  { label: 'Visual Basic', value: 'vbnet' },
-  { label: 'WebAssembly', value: 'wasm' },
-  { label: 'XML', value: 'xml' },
-  { label: 'YAML', value: 'yaml' },
-];
-
-function getCodeBlockLanguageLabel(lang?: string | null) {
-  const value = lang?.trim();
-
-  if (!value) return null;
-
-  return (
-    codeBlockLanguages.find((language) => language.value === value)?.label ??
-    value
-  );
-}
 
 export function CodeBlockElementStatic({
   showLanguageLabel = true,
@@ -133,50 +32,45 @@ export function CodeBlockElementStatic({
   const theme = getCodeBlockTheme(
     (props.element as CodeBlockElementData).theme
   );
-  const showMacDots = theme === 'mac';
+  const wrap = (props.element as CodeBlockElementData).wrap === true;
 
   return (
     <SlateElement
       {...props}
-      className={['slate-code-block py-1', props.className]
+      className={['slate-code-block my-2', props.className]
         .filter(Boolean)
         .join(' ')}
       data-theme={theme}
+      data-wrap={wrap ? 'true' : 'false'}
     >
       <div
-        className="relative overflow-hidden rounded-lg border shadow-sm"
+        className="relative overflow-hidden rounded-md border"
         style={{
           backgroundColor: 'var(--code-bg, #f7f6f3)',
           borderColor: 'var(--code-border, rgba(55, 53, 47, 0.09))',
         }}
       >
-        <div
-          className="flex items-center gap-2 border-b px-3 py-1.5"
-          style={{
-            backgroundColor: 'var(--code-toolbar, rgba(55, 53, 47, 0.04))',
-            borderColor: 'var(--code-border, rgba(55, 53, 47, 0.09))',
-          }}
-          contentEditable={false}
+        {showLanguageLabel && languageLabel && (
+          <div
+            className="absolute top-2 right-2.5 z-10 select-none rounded px-1.5 py-0.5 text-[11px] leading-none"
+            style={{
+              backgroundColor: 'var(--code-toolbar, rgba(55, 53, 47, 0.04))',
+              color: 'var(--code-toolbar-fg, rgba(55, 53, 47, 0.55))',
+            }}
+            contentEditable={false}
+          >
+            {languageLabel}
+          </div>
+        )}
+
+        <pre
+          className={[
+            'px-4 py-3.5 font-mono text-[13px] leading-[1.7] [tab-size:2] print:break-inside-avoid',
+            wrap
+              ? 'overflow-x-hidden whitespace-pre-wrap break-words'
+              : 'overflow-x-auto whitespace-pre',
+          ].join(' ')}
         >
-          {showMacDots && (
-            <div className="flex shrink-0 items-center gap-1.5 pr-1">
-              <span className="size-2.5 rounded-full bg-[#ff5f56]" />
-              <span className="size-2.5 rounded-full bg-[#ffbd2e]" />
-              <span className="size-2.5 rounded-full bg-[#27c93f]" />
-            </div>
-          )}
-
-          {showLanguageLabel && languageLabel && (
-            <div
-              className="ml-auto flex h-6 select-none items-center px-2 text-xs"
-              style={{ color: 'var(--code-toolbar-fg, rgba(55, 53, 47, 0.55))' }}
-            >
-              {languageLabel}
-            </div>
-          )}
-        </div>
-
-        <pre className="overflow-x-auto px-4 py-3 font-mono text-[13px] leading-[1.65] [tab-size:2] print:break-inside-avoid">
           <code>{props.children}</code>
         </pre>
       </div>

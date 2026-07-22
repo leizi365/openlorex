@@ -3,7 +3,15 @@
 import * as React from 'react';
 
 import { formatCodeBlock, isLangSupported } from '@platejs/code-block';
-import { BracesIcon, Check, CheckIcon, CopyIcon, PaintbrushIcon } from 'lucide-react';
+import {
+  BracesIcon,
+  Check,
+  CheckIcon,
+  ChevronDownIcon,
+  CopyIcon,
+  PaintbrushIcon,
+  WrapTextIcon,
+} from 'lucide-react';
 import { type TCodeBlockElement, type TCodeSyntaxLeaf, NodeApi } from 'platejs';
 import {
   type PlateElementProps,
@@ -28,6 +36,10 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/app/api/ai/command/utils';
+import {
+  CODE_BLOCK_LANGUAGES,
+  getCodeBlockLanguageLabel,
+} from '@/lib/code-block-languages';
 
 import {
   CODE_BLOCK_THEMES,
@@ -37,114 +49,12 @@ import {
 
 type CodeBlockElementData = TCodeBlockElement & {
   theme?: CodeBlockTheme;
+  wrap?: boolean;
 };
 
 type CodeBlockElementProps = PlateElementProps<CodeBlockElementData> & {
   showLanguageLabel?: boolean;
 };
-
-const codeBlockLanguages: { label: string; value: string }[] = [
-  { label: '自动', value: 'auto' },
-  { label: '纯文本', value: 'plaintext' },
-  { label: 'ABAP', value: 'abap' },
-  { label: 'Agda', value: 'agda' },
-  { label: 'Arduino', value: 'arduino' },
-  { label: 'ASCII Art', value: 'ascii' },
-  { label: 'Assembly', value: 'x86asm' },
-  { label: 'Bash', value: 'bash' },
-  { label: 'BASIC', value: 'basic' },
-  { label: 'BNF', value: 'bnf' },
-  { label: 'C', value: 'c' },
-  { label: 'C#', value: 'csharp' },
-  { label: 'C++', value: 'cpp' },
-  { label: 'Clojure', value: 'clojure' },
-  { label: 'CoffeeScript', value: 'coffeescript' },
-  { label: 'Coq', value: 'coq' },
-  { label: 'CSS', value: 'css' },
-  { label: 'Dart', value: 'dart' },
-  { label: 'Dhall', value: 'dhall' },
-  { label: 'Diff', value: 'diff' },
-  { label: 'Docker', value: 'dockerfile' },
-  { label: 'EBNF', value: 'ebnf' },
-  { label: 'Elixir', value: 'elixir' },
-  { label: 'Elm', value: 'elm' },
-  { label: 'Erlang', value: 'erlang' },
-  { label: 'F#', value: 'fsharp' },
-  { label: 'Flow', value: 'flow' },
-  { label: 'Fortran', value: 'fortran' },
-  { label: 'Gherkin', value: 'gherkin' },
-  { label: 'GLSL', value: 'glsl' },
-  { label: 'Go', value: 'go' },
-  { label: 'GraphQL', value: 'graphql' },
-  { label: 'Groovy', value: 'groovy' },
-  { label: 'Haskell', value: 'haskell' },
-  { label: 'HCL', value: 'hcl' },
-  { label: 'HTML', value: 'html' },
-  { label: 'Idris', value: 'idris' },
-  { label: 'Java', value: 'java' },
-  { label: 'JavaScript', value: 'javascript' },
-  { label: 'JSON', value: 'json' },
-  { label: 'Julia', value: 'julia' },
-  { label: 'Kotlin', value: 'kotlin' },
-  { label: 'LaTeX', value: 'latex' },
-  { label: 'Less', value: 'less' },
-  { label: 'Lisp', value: 'lisp' },
-  { label: 'LiveScript', value: 'livescript' },
-  { label: 'LLVM IR', value: 'llvm' },
-  { label: 'Lua', value: 'lua' },
-  { label: 'Makefile', value: 'makefile' },
-  { label: 'Markdown', value: 'markdown' },
-  { label: 'Markup', value: 'markup' },
-  { label: 'MATLAB', value: 'matlab' },
-  { label: 'Mathematica', value: 'mathematica' },
-  { label: 'Mermaid', value: 'mermaid' },
-  { label: 'Nix', value: 'nix' },
-  { label: 'Notion Formula', value: 'notion' },
-  { label: 'Objective-C', value: 'objectivec' },
-  { label: 'OCaml', value: 'ocaml' },
-  { label: 'Pascal', value: 'pascal' },
-  { label: 'Perl', value: 'perl' },
-  { label: 'PHP', value: 'php' },
-  { label: 'PowerShell', value: 'powershell' },
-  { label: 'Prolog', value: 'prolog' },
-  { label: 'Protocol Buffers', value: 'protobuf' },
-  { label: 'PureScript', value: 'purescript' },
-  { label: 'Python', value: 'python' },
-  { label: 'R', value: 'r' },
-  { label: 'Racket', value: 'racket' },
-  { label: 'Reason', value: 'reasonml' },
-  { label: 'Ruby', value: 'ruby' },
-  { label: 'Rust', value: 'rust' },
-  { label: 'Sass', value: 'scss' },
-  { label: 'Scala', value: 'scala' },
-  { label: 'Scheme', value: 'scheme' },
-  { label: 'SCSS', value: 'scss' },
-  { label: 'Shell', value: 'shell' },
-  { label: 'Smalltalk', value: 'smalltalk' },
-  { label: 'Solidity', value: 'solidity' },
-  { label: 'SQL', value: 'sql' },
-  { label: 'Swift', value: 'swift' },
-  { label: 'TOML', value: 'toml' },
-  { label: 'TypeScript', value: 'typescript' },
-  { label: 'VB.Net', value: 'vbnet' },
-  { label: 'Verilog', value: 'verilog' },
-  { label: 'VHDL', value: 'vhdl' },
-  { label: 'Visual Basic', value: 'vbnet' },
-  { label: 'WebAssembly', value: 'wasm' },
-  { label: 'XML', value: 'xml' },
-  { label: 'YAML', value: 'yaml' },
-];
-
-function getCodeBlockLanguageLabel(lang?: string | null) {
-  const value = lang?.trim();
-
-  if (!value) return null;
-
-  return (
-    codeBlockLanguages.find((language) => language.value === value)?.label ??
-    value
-  );
-}
 
 export function CodeBlockElement({
   showLanguageLabel = true,
@@ -152,15 +62,18 @@ export function CodeBlockElement({
 }: CodeBlockElementProps) {
   const { editor, element } = props;
   const theme = getCodeBlockTheme(element.theme);
-  const showMacDots = theme === 'mac';
+  const readOnly = useReadOnly();
+  const showMacDots = theme === 'dracula';
+  const wrap = element.wrap === true;
 
   return (
     <PlateElement
       {...props}
-      className={cn('slate-code-block py-1', props.className)}
+      className={cn('slate-code-block my-2', props.className)}
       attributes={{
         ...props.attributes,
         'data-theme': theme,
+        'data-wrap': wrap ? 'true' : 'false',
         lang: 'zxx',
         spellCheck: false,
         autoCorrect: 'off',
@@ -171,32 +84,40 @@ export function CodeBlockElement({
       }}
     >
       <div
-        className="relative overflow-hidden rounded-lg border shadow-sm"
+        className="group/code relative overflow-hidden rounded-md border"
         style={{
           backgroundColor: 'var(--code-bg)',
           borderColor: 'var(--code-border)',
         }}
       >
         <div
-          className="flex items-center gap-2 border-b px-3 py-1.5"
-          style={{
-            backgroundColor: 'var(--code-toolbar)',
-            borderColor: 'var(--code-border)',
-          }}
+          className={cn(
+            'pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 px-2.5 pt-2',
+            'opacity-0 transition-opacity duration-150',
+            'group-hover/code:pointer-events-auto group-hover/code:opacity-100',
+            'group-focus-within/code:pointer-events-auto group-focus-within/code:opacity-100',
+            'has-[[data-state=open]]:pointer-events-auto has-[[data-state=open]]:opacity-100'
+          )}
           contentEditable={false}
         >
-          {showMacDots ? (
-            <div className="flex shrink-0 items-center gap-1.5 pr-1">
-              <span className="size-2.5 rounded-full bg-[#ff5f56]" />
-              <span className="size-2.5 rounded-full bg-[#ffbd2e]" />
-              <span className="size-2.5 rounded-full bg-[#27c93f]" />
-            </div>
-          ) : (
-            <div className="min-w-0 flex-1" />
-          )}
+          <div className="min-w-0">
+            {showMacDots && (
+              <div className="flex items-center gap-1.5 px-1 pt-0.5">
+                <span className="size-2 rounded-full bg-[#ff5f56]" />
+                <span className="size-2 rounded-full bg-[#ffbd2e]" />
+                <span className="size-2 rounded-full bg-[#27c93f]" />
+              </div>
+            )}
+          </div>
 
-          <div className="ml-auto flex items-center gap-0.5">
-            {isLangSupported(element.lang) && (
+          <div
+            className="flex items-center gap-0.5 rounded-md border px-0.5 py-0.5 shadow-sm backdrop-blur-sm"
+            style={{
+              backgroundColor: 'var(--code-toolbar)',
+              borderColor: 'var(--code-border)',
+            }}
+          >
+            {!readOnly && isLangSupported(element.lang) && (
               <Button
                 size="icon"
                 variant="ghost"
@@ -209,7 +130,8 @@ export function CodeBlockElement({
               </Button>
             )}
 
-            <CodeBlockThemePicker />
+            {!readOnly && <CodeBlockWrapToggle />}
+            {!readOnly && <CodeBlockThemePicker />}
             <CodeBlockCombobox showLanguageLabel={showLanguageLabel} />
 
             <CopyButton
@@ -223,7 +145,12 @@ export function CodeBlockElement({
         </div>
 
         <pre
-          className="overflow-x-auto px-4 py-3 font-mono text-[13px] leading-[1.65] [tab-size:2] print:break-inside-avoid"
+          className={cn(
+            'px-4 py-3.5 font-mono text-[13px] leading-[1.7] [tab-size:2] print:break-inside-avoid',
+            wrap
+              ? 'overflow-x-hidden whitespace-pre-wrap break-words'
+              : 'overflow-x-auto whitespace-pre'
+          )}
           spellCheck={false}
         >
           <code spellCheck={false}>{props.children}</code>
@@ -233,80 +160,78 @@ export function CodeBlockElement({
   );
 }
 
+function CodeBlockWrapToggle() {
+  const editor = useEditorRef();
+  const element = useElement<CodeBlockElementData>();
+  const wrap = element.wrap === true;
+
+  return (
+    <Button
+      size="icon"
+      variant="ghost"
+      className={cn('size-6 text-xs', wrap && 'bg-accent/60')}
+      style={{ color: 'var(--code-toolbar-fg)' }}
+      title={wrap ? '取消自动换行' : '自动换行'}
+      aria-pressed={wrap}
+      onClick={() => {
+        editor.tf.setNodes({ wrap: !wrap }, { at: element });
+      }}
+    >
+      <WrapTextIcon className="!size-3.5" />
+    </Button>
+  );
+}
+
 function CodeBlockThemePicker() {
   const [open, setOpen] = React.useState(false);
-  const readOnly = useReadOnly();
   const editor = useEditorRef();
   const element = useElement<CodeBlockElementData>();
   const theme = getCodeBlockTheme(element.theme);
-
-  if (readOnly) return null;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={
           <Button
-            size="sm"
+            size="icon"
             variant="ghost"
-            className="h-6 gap-1 px-2 text-xs"
+            className="size-6 text-xs"
             style={{ color: 'var(--code-toolbar-fg)' }}
             title="代码块样式"
           />
         }
       >
         <PaintbrushIcon className="!size-3.5" />
-        <span className="hidden sm:inline">
-          {CODE_BLOCK_THEMES.find((item) => item.value === theme)?.label ??
-            'Style'}
-        </span>
       </PopoverTrigger>
-      <PopoverContent className="w-[160px] p-1" align="end">
-        {CODE_BLOCK_THEMES.map((item) => (
-          <button
-            key={item.value}
-            type="button"
-            className={cn(
-              'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent',
-              theme === item.value && 'bg-accent'
-            )}
-            onClick={() => {
-              editor.tf.setNodes({ theme: item.value }, { at: element });
-              setOpen(false);
-            }}
-          >
-            <CodeBlockThemePreview theme={item.value} />
-            {item.label}
-          </button>
-        ))}
+      <PopoverContent className="w-[188px] p-1.5" align="end">
+        <div className="grid grid-cols-2 gap-0.5">
+          {CODE_BLOCK_THEMES.map((item) => {
+            const selected = theme === item.value;
+
+            return (
+              <button
+                key={item.value}
+                type="button"
+                className={cn(
+                  'flex items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-[12px] text-foreground/80 transition-colors hover:bg-accent',
+                  selected && 'bg-accent text-foreground'
+                )}
+                onClick={() => {
+                  editor.tf.setNodes({ theme: item.value }, { at: element });
+                  setOpen(false);
+                }}
+              >
+                <span
+                  className="size-3 shrink-0 rounded-[3px] border border-black/10"
+                  style={{ backgroundColor: item.swatch }}
+                />
+                <span className="truncate">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </PopoverContent>
     </Popover>
-  );
-}
-
-function CodeBlockThemePreview({ theme }: { theme: CodeBlockTheme }) {
-  if (theme === 'mac') {
-    return (
-      <span className="flex items-center gap-0.5 rounded bg-[#282a36] px-1 py-0.5">
-        <span className="size-1.5 rounded-full bg-[#ff5f56]" />
-        <span className="size-1.5 rounded-full bg-[#ffbd2e]" />
-        <span className="size-1.5 rounded-full bg-[#27c93f]" />
-      </span>
-    );
-  }
-
-  const colors: Record<CodeBlockTheme, string> = {
-    default: '#f7f6f3',
-    github: '#0d1117',
-    mac: '#282a36',
-    terminal: '#0b0f0c',
-  };
-
-  return (
-    <span
-      className="size-3.5 rounded-sm border border-black/10"
-      style={{ backgroundColor: colors[theme] }}
-    />
   );
 }
 
@@ -324,7 +249,7 @@ function CodeBlockCombobox({
 
   const items = React.useMemo(
     () =>
-      codeBlockLanguages.filter(
+      CODE_BLOCK_LANGUAGES.filter(
         (language) =>
           !searchValue ||
           language.label.toLowerCase().includes(searchValue.toLowerCase())
@@ -345,14 +270,15 @@ function CodeBlockCombobox({
           <Button
             size="sm"
             variant="ghost"
-            className="h-6 select-none justify-between gap-1 px-2 text-xs"
+            className="h-6 select-none justify-between gap-1 px-2 text-xs font-normal"
             style={{ color: 'var(--code-toolbar-fg)' }}
             aria-expanded={open}
             role="combobox"
           />
         }
       >
-        {getCodeBlockLanguageLabel(value) ?? 'Auto'}
+        {getCodeBlockLanguageLabel(value) ?? '自动'}
+        <ChevronDownIcon className="!size-3 opacity-60" />
       </PopoverTrigger>
       <PopoverContent
         className="w-[200px] p-0"
@@ -362,7 +288,7 @@ function CodeBlockCombobox({
           <CommandInput
             className="h-9"
             value={searchValue}
-            onValueChange={(value) => setSearchValue(value)}
+            onValueChange={(next) => setSearchValue(next)}
             placeholder="搜索语言…"
           />
           <CommandEmpty>未找到语言</CommandEmpty>
@@ -374,12 +300,12 @@ function CodeBlockCombobox({
                   key={language.label}
                   className="cursor-pointer"
                   value={language.value}
-                  onSelect={(value) => {
+                  onSelect={(selected) => {
                     editor.tf.setNodes<TCodeBlockElement>(
-                      { lang: value },
+                      { lang: selected },
                       { at: element }
                     );
-                    setSearchValue(value);
+                    setSearchValue(selected);
                     setOpen(false);
                   }}
                 >
@@ -405,7 +331,10 @@ function CodeBlockLanguageLabel({ lang }: { lang?: string | null }) {
   if (!label) return null;
 
   return (
-    <span className="flex h-6 select-none items-center px-2 text-muted-foreground text-xs">
+    <span
+      className="flex h-6 select-none items-center px-2 text-xs"
+      style={{ color: 'var(--code-toolbar-fg)' }}
+    >
       {label}
     </span>
   );
@@ -421,9 +350,13 @@ function CopyButton({
   const [hasCopied, setHasCopied] = React.useState(false);
 
   React.useEffect(() => {
-    setTimeout(() => {
+    if (!hasCopied) return;
+
+    const timer = window.setTimeout(() => {
       setHasCopied(false);
     }, 2000);
+
+    return () => window.clearTimeout(timer);
   }, [hasCopied]);
 
   return (
@@ -434,9 +367,10 @@ function CopyButton({
         );
         setHasCopied(true);
       }}
+      title="复制"
       {...props}
     >
-      <span className="sr-only">Copy</span>
+      <span className="sr-only">复制</span>
       {hasCopied ? (
         <CheckIcon className="!size-3" />
       ) : (

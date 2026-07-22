@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Menu, Share2 } from 'lucide-react';
+import { FileDown, Menu, Share2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { WikiEditor } from '@/components/editor/WikiEditor';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -10,6 +11,7 @@ import { ColorEmoji } from '@/components/ui/color-emoji';
 import { useAuth } from '@/features/auth/auth-context';
 import { usePages } from '@/features/pages/page-context';
 import { recordPageVisit } from '@/features/pages/recent-visits';
+import { exportContentToDocx } from '@/lib/export-docx';
 
 export function EditorPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -23,6 +25,7 @@ export function EditorPage() {
   } = usePages();
   const { toggleSidebar } = useLayout();
   const [shareOpen, setShareOpen] = React.useState(false);
+  const [exporting, setExporting] = React.useState(false);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -37,6 +40,26 @@ export function EditorPage() {
       coverColor: activePage.coverColor,
     });
   }, [activePage?.id, user?.id]);
+
+  const handleExportWord = React.useCallback(async () => {
+    if (!activePage) return;
+
+    if (activePage.contentLoaded === false) {
+      toast.error('内容仍在加载，请稍后再导出');
+      return;
+    }
+
+    setExporting(true);
+    try {
+      await exportContentToDocx(activePage.content, activePage.title);
+      toast.success('已导出 Word');
+    } catch (error) {
+      console.error(error);
+      toast.error('导出 Word 失败');
+    } finally {
+      setExporting(false);
+    }
+  }, [activePage]);
 
   if (authLoading || isLoading || (activePageId && !activePage)) {
     return (
@@ -98,6 +121,15 @@ export function EditorPage() {
             </span>
           ) : null}
         </div>
+        <button
+          type="button"
+          className="flex size-8 items-center justify-center rounded-md text-muted-foreground disabled:opacity-50"
+          onClick={() => void handleExportWord()}
+          disabled={exporting || activePage.contentLoaded === false}
+          aria-label="导出 Word"
+        >
+          <FileDown className="size-4" />
+        </button>
         {isOwner ? (
           <button
             type="button"
@@ -126,6 +158,7 @@ export function EditorPage() {
           onCoverChange={(coverColor) =>
             updatePage(activePage.id, { coverColor })
           }
+          onExportWordClick={handleExportWord}
           onShareClick={isOwner ? () => setShareOpen(true) : undefined}
           pageAccess={activePageAccess}
         />

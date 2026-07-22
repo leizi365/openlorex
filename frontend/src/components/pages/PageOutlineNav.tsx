@@ -1,10 +1,11 @@
 'use client';
 
 import * as React from 'react';
-import { ChevronDown, ChevronRight, ChevronsLeft, ListTree } from 'lucide-react';
+import { ChevronDown, ChevronRight, PanelLeftClose, TableOfContents } from 'lucide-react';
 import { ElementApi, KEYS, NodeApi } from 'platejs';
 import { useEditorSelector, type PlateEditor } from 'platejs/react';
 
+import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
 type OutlineHeading = {
@@ -197,6 +198,7 @@ export function PageOutlineNav({
   className,
   scrollContainerRef,
 }: PageOutlineNavProps) {
+  const isMobile = useIsMobile();
   const [open, setOpen] = React.useState(false);
   const headingList = useEditorSelector(getOutlineHeadings, []);
   const headingTree = React.useMemo(
@@ -331,14 +333,14 @@ export function PageOutlineNav({
     [scrollContainerRef]
   );
 
-  if (headingList.length === 0) {
+  if (isMobile || headingList.length === 0) {
     return null;
   }
 
   return (
     <div
       className={cn(
-        'pointer-events-none absolute top-0 left-3 z-20 hidden w-[260px] flex-col items-stretch md:left-4 md:flex',
+        'pointer-events-none absolute top-0 left-3 z-20 flex w-[260px] flex-col items-stretch md:left-4',
         className
       )}
     >
@@ -350,13 +352,13 @@ export function PageOutlineNav({
         )}
         aria-label={open ? '收起目录' : '展开目录'}
         aria-expanded={open}
-        title={open ? '收起目录' : '目录'}
+        title={open ? '收起目录' : '页面目录'}
         onClick={() => setOpen((v) => !v)}
       >
         {open ? (
-          <ChevronsLeft className="size-[15px]" strokeWidth={1.75} />
+          <PanelLeftClose className="size-[15px]" strokeWidth={1.75} />
         ) : (
-          <ListTree className="size-[15px]" strokeWidth={1.75} />
+          <TableOfContents className="size-[15px]" strokeWidth={1.75} />
         )}
       </button>
 

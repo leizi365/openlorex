@@ -11,7 +11,13 @@ import {
   useImagePreviewValue,
 } from '@platejs/media/react';
 import { cva } from 'class-variance-authority';
-import { Link, Trash2Icon } from 'lucide-react';
+import {
+  AlignCenterIcon,
+  AlignLeftIcon,
+  AlignRightIcon,
+  Link,
+  Trash2Icon,
+} from 'lucide-react';
 import { KEYS } from 'platejs';
 import {
   useEditorRef,
@@ -30,6 +36,7 @@ import {
   PopoverContent,
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 import { CaptionButton } from './caption';
 import {
@@ -44,6 +51,56 @@ import {
 const inputVariants = cva(
   'flex h-[28px] w-full rounded-md border-none bg-transparent px-1.5 py-1 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-transparent md:text-sm'
 );
+
+type MediaAlign = 'left' | 'center' | 'right';
+
+const mediaAlignItems: {
+  icon: typeof AlignLeftIcon;
+  label: string;
+  value: MediaAlign;
+}[] = [
+  { icon: AlignLeftIcon, label: '居左', value: 'left' },
+  { icon: AlignCenterIcon, label: '居中', value: 'center' },
+  { icon: AlignRightIcon, label: '居右', value: 'right' },
+];
+
+function getMediaAlign(value?: string | null): MediaAlign {
+  if (value === 'left' || value === 'right' || value === 'center') {
+    return value;
+  }
+
+  if (value === 'start') return 'left';
+  if (value === 'end') return 'right';
+
+  return 'center';
+}
+
+function MediaAlignControls() {
+  const editor = useEditorRef();
+  const element = useElement<{ align?: string }>();
+  const align = getMediaAlign(element.align);
+
+  return (
+    <div className="flex items-center gap-0.5">
+      {mediaAlignItems.map(({ icon: Icon, label, value }) => (
+        <Button
+          key={value}
+          size="sm"
+          variant="ghost"
+          className={cn('size-8 px-0', align === value && 'bg-accent')}
+          title={label}
+          aria-label={label}
+          aria-pressed={align === value}
+          onClick={() => {
+            editor.tf.setNodes({ align: value }, { at: element });
+          }}
+        >
+          <Icon className="size-4" />
+        </Button>
+      ))}
+    </div>
+  );
+}
 
 export function MediaToolbar({
   children,
@@ -61,6 +118,8 @@ export function MediaToolbar({
     []
   );
   const isImagePreviewOpen = useImagePreviewValue('isOpen', editor.id);
+  const element = useElement();
+  const isFile = element.type === KEYS.file;
   const open =
     isFocusedLast &&
     selected &&
@@ -76,11 +135,9 @@ export function MediaToolbar({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const element = useElement();
   const { props: buttonProps } = useRemoveNodeButton({ element });
   const showHeight = mediaSupportsHeight(element.type);
   const isImage = element.type === KEYS.img;
-  const isFile = element.type === KEYS.file;
 
   return (
     <Popover open={open} modal={false}>
@@ -107,6 +164,8 @@ export function MediaToolbar({
         ) : (
           <div className="box-content flex items-center gap-1">
             {isFile && !readOnly ? <FileBackgroundColorButton /> : null}
+
+            {!readOnly ? <MediaAlignControls /> : null}
 
             {!readOnly ? (
               <MediaSizeControls showHeight={showHeight} className="px-1" />
