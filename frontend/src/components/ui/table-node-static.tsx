@@ -3,10 +3,36 @@ import * as React from 'react';
 import type { TTableCellElement, TTableElement } from 'platejs';
 import type { SlateElementProps } from 'platejs/static';
 
-import { BaseTablePlugin } from '@platejs/table';
+import { BaseTablePlugin, getTableColumnCount } from '@platejs/table';
 import { SlateElement } from 'platejs/static';
 
 import { cn } from '@/app/api/ai/command/utils';
+
+const TABLE_DEFAULT_COLUMN_WIDTH = 120;
+
+function getStaticColSizes(element: TTableElement) {
+  const columnCount = getTableColumnCount(element);
+  if (columnCount <= 0) return [] as number[];
+
+  const stored = element.colSizes ?? [];
+  const fallback = Array.from(
+    { length: columnCount },
+    () => TABLE_DEFAULT_COLUMN_WIDTH
+  );
+
+  if (stored.length === 0) return fallback;
+
+  const normalized = stored.map(
+    (size) => size || TABLE_DEFAULT_COLUMN_WIDTH
+  );
+
+  if (normalized.length === columnCount) return normalized;
+  if (normalized.length > columnCount) {
+    return normalized.slice(0, columnCount);
+  }
+
+  return [...normalized, ...fallback.slice(normalized.length)];
+}
 
 export function TableElementStatic({
   children,
@@ -14,6 +40,11 @@ export function TableElementStatic({
 }: SlateElementProps<TTableElement>) {
   const { disableMarginLeft } = props.editor.getOptions(BaseTablePlugin);
   const marginLeft = disableMarginLeft ? 0 : props.element.marginLeft;
+  const colSizes = getStaticColSizes(props.element);
+  const tableWidth =
+    colSizes.length > 0
+      ? colSizes.reduce((total, size) => total + size, 0)
+      : undefined;
 
   return (
     <SlateElement
@@ -24,8 +55,18 @@ export function TableElementStatic({
       <div className="group/table relative w-max">
         <table
           className="mr-0 ml-0 table h-px w-auto table-fixed border-collapse"
-          style={{ borderCollapse: 'collapse' }}
+          style={{
+            borderCollapse: 'collapse',
+            width: tableWidth,
+          }}
         >
+          {colSizes.length > 0 && (
+            <colgroup>
+              {colSizes.map((colSize, index) => (
+                <col key={index} style={{ width: colSize }} />
+              ))}
+            </colgroup>
+          )}
           <tbody>{children}</tbody>
         </table>
       </div>
@@ -114,9 +155,10 @@ export function TableCellElementStatic({
       {...props}
       as={isHeader ? 'th' : 'td'}
       className={cn(
-        'h-full overflow-hidden border-none bg-background p-0',
+        'relative h-full overflow-hidden border-none bg-background p-0',
         element.background ? 'bg-(--cellBackground)' : 'bg-background',
-        isHeader && 'font-normal *:m-0',
+        // Override UA th { text-align: center } so pasted headers line up with body cells.
+        isHeader && 'text-left font-normal *:m-0',
         'before:size-full',
         "before:absolute before:box-border before:select-none before:content-['']",
         borders &&
@@ -130,8 +172,9 @@ export function TableCellElementStatic({
       style={
         {
           '--cellBackground': element.background,
+          maxWidth: width || 120,
+          minWidth: width || 120,
           verticalAlign,
-          width: width || 120,
         } as React.CSSProperties
       }
       attributes={{

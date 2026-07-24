@@ -25,6 +25,7 @@ import type {
   JoinApplicationDto,
 } from '@/lib/api/communities';
 import type { SharedPageDto } from '@/lib/api/pages';
+import { copyTextToClipboard } from '@/lib/clipboard';
 import {
   formatCommunityRole,
   formatCommunityVisibility,
@@ -187,7 +188,7 @@ export function CommunityDetailPage() {
       const invitation = await createInvitation(communityId, email.trim());
       toast.success('邀请已创建');
       if (invitation.invite_link) {
-        await navigator.clipboard.writeText(invitation.invite_link);
+        await copyTextToClipboard(invitation.invite_link);
         toast.message('邀请链接已复制，请发送给对方');
       }
       setEmail('');

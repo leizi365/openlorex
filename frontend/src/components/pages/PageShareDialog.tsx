@@ -17,6 +17,7 @@ import {
   fetchPagePublicSettings,
   updatePagePublicSettings,
 } from '@/lib/api/pages';
+import { copyTextToClipboard } from '@/lib/clipboard';
 import { pageAccessPath, publicPageUrl } from '@/lib/page-paths';
 import { cn } from '@/lib/utils';
 
@@ -136,10 +137,10 @@ export function PageShareDialog({
 
   const handleCopyPublicLink = async () => {
     try {
-      await navigator.clipboard.writeText(publicLink);
+      await copyTextToClipboard(publicLink);
       toast.message('公开链接已复制');
     } catch {
-      toast.error('复制失败');
+      toast.error('复制失败，请手动选中链接复制');
     }
   };
 

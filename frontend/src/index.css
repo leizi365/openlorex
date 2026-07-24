@@ -194,6 +194,12 @@
     padding-block: 0;
   }
 
+  /* UA stylesheet centers <th>; keep headers left-aligned with body cells. */
+  [data-slate-editor] .wiki-table-block th {
+    text-align: left;
+    font-weight: normal;
+  }
+
   [data-slate-editor] .wiki-table-block::-webkit-scrollbar {
     height: 8px;
   }

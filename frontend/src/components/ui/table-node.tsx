@@ -1482,7 +1482,8 @@ export function TableCellElement({
       className={cn(
         'relative h-full overflow-hidden border-none bg-background p-0',
         element.background ? 'bg-(--cellBackground)' : 'bg-background',
-        isHeader && 'font-normal *:m-0',
+        // Override UA th { text-align: center } so pasted headers line up with body cells.
+        isHeader && 'text-left font-normal *:m-0',
         'before:size-full',
         'data-[table-cell-selected=true]:before:z-10',
         'data-[table-cell-selected=true]:before:bg-brand/5',
@@ -1495,7 +1496,9 @@ export function TableCellElement({
       style={
         {
           '--cellBackground': element.background,
-          width,
+          // Prefer min/max over width so colgroup stays authoritative (avoids th/td drift).
+          maxWidth: width,
+          minWidth: width,
           verticalAlign: getTableCellVerticalAlign(alignElement),
         } as React.CSSProperties
       }
